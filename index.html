@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dev Saxena — Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --text:#dbd6cc;
+  --text-dim:rgba(219,214,204,0.46);
+  --text-muted:rgba(219,214,204,0.22);
+  --gold:#c4a558;
+  --gold-dim:rgba(196,165,88,0.55);
+  --gold-glow:rgba(196,165,88,0.16);
+  --glass:rgba(255,255,255,0.036);
+  --glass-b:rgba(255,255,255,0.072);
+  --glass-bs:rgba(255,255,255,0.12);
+}
+html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:default}
+#c{position:fixed;inset:0;z-index:1}
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+
+/* ── Solar hint ── */
+#solar-hint{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:400;
+  color:var(--text-muted);letter-spacing:5px;text-transform:uppercase;
+  z-index:20;pointer-events:none;transition:opacity 0.6s;white-space:nowrap;
+}
+
+/* ── Back button ── */
+#back-btn{
+  position:fixed;top:20px;left:20px;z-index:20;
+  background:var(--glass);border:1px solid var(--glass-b);
+  color:var(--text-dim);
+  font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:500;
+  letter-spacing:3.5px;text-transform:uppercase;
+  padding:10px 20px;cursor:pointer;pointer-events:all;
+  transition:all 0.3s;opacity:0;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+#back-btn.visible{opacity:1}
+#back-btn:hover{background:rgba(255,255,255,0.06);border-color:var(--glass-bs);color:var(--text)}
+
+/* ── Planet label ── */
+#planet-label{
+  position:fixed;top:36px;left:50%;transform:translateX(-50%);
+  text-align:center;z-index:20;pointer-events:none;
+  opacity:0;transition:opacity 0.55s;
+}
+#planet-label.visible{opacity:1}
+#planet-label h1{
+  font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:300;
+  color:var(--text);letter-spacing:10px;text-transform:uppercase;
+}
+#planet-label p{
+  font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:500;
+  color:var(--gold);letter-spacing:6px;text-transform:uppercase;margin-top:10px;
+  opacity:0.85;
+}
+
+/* ── Click hint ── */
+#click-hint{
+  position:fixed;bottom:54px;left:50%;transform:translateX(-50%);
+  font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:400;
+  color:var(--text-muted);letter-spacing:4px;text-transform:uppercase;
+  z-index:20;pointer-events:none;opacity:0;transition:opacity 0.55s;white-space:nowrap;
+}
+#click-hint.visible{opacity:1}
+
+/* ── Nav — segment style ── */
+#nav-dots{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  display:flex;gap:5px;z-index:20;opacity:0;transition:opacity 0.5s;align-items:center;
+}
+#nav-dots.visible{opacity:1}
+.dot{
+  width:16px;height:2px;border-radius:2px;
+  background:rgba(255,255,255,0.18);
+  cursor:pointer;pointer-events:all;
+  transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dot.active{width:26px;background:var(--gold);box-shadow:0 0 8px var(--gold-glow);}
+.dot:hover:not(.active){background:rgba(255,255,255,0.42);}
+
+/* ── Tooltip ── */
+#tooltip{position:fixed;z-index:20;pointer-events:none;opacity:0;transition:opacity 0.15s;transform:translateX(-50%)}
+#tooltip.show{opacity:1}
+#tooltip-inner{
+  background:rgba(4,4,10,0.9);border:1px solid var(--glass-b);
+  padding:10px 22px;text-align:center;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+}
+#tooltip-inner h3{
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:500;
+  color:var(--text);letter-spacing:3.5px;text-transform:uppercase;
+}
+#tooltip-inner p{
+  font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:400;
+  color:var(--gold-dim);letter-spacing:3px;text-transform:uppercase;margin-top:5px;
+}
+
+/* ── Page overlay ── */
+#page-overlay{
+  position:fixed;inset:0;z-index:40;
+  opacity:0;pointer-events:none;transition:opacity 0.5s;overflow:hidden;
+}
+#page-overlay.open{opacity:1;pointer-events:all}
+#page-bg{position:absolute;inset:0}
+#page-bg::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,0.03) 0%,transparent 65%);
+  pointer-events:none;
+}
+
+#page-close{
+  position:fixed;top:20px;left:20px;z-index:50;
+  background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.1);
+  font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:500;
+  letter-spacing:3.5px;text-transform:uppercase;cursor:pointer;
+  padding:10px 20px;transition:all 0.3s;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+#page-close:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.26)}
+
+#page-inner{
+  position:relative;z-index:5;height:100%;
+  overflow-y:auto;scrollbar-width:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 32px 60px;
+}
+#page-inner::-webkit-scrollbar{display:none}
+
+/* ── Page content ── */
+.pg-content{width:100%;max-width:600px;}
+
+.pg-eyebrow{
+  font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:500;
+  letter-spacing:5px;text-transform:uppercase;margin-bottom:22px;
+  opacity:0;transform:translateY(14px);transition:all 0.6s 0.12s;
+}
+#page-overlay.open .pg-eyebrow{opacity:1;transform:translateY(0)}
+
+.pg-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(34px,6vw,58px);font-weight:300;
+  letter-spacing:2px;text-transform:uppercase;line-height:1;
+  margin-bottom:16px;
+  opacity:0;transform:translateY(22px);transition:all 0.62s 0.24s;
+}
+#page-overlay.open .pg-title{opacity:1;transform:translateY(0)}
+
+.pg-tab{
+  display:inline-block;
+  font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:500;
+  letter-spacing:5px;text-transform:uppercase;padding:5px 14px;border:1px solid;
+  margin-bottom:34px;
+  opacity:0;transform:translateY(10px);transition:all 0.6s 0.34s;
+}
+#page-overlay.open .pg-tab{opacity:1;transform:translateY(0)}
+
+.pg-divider{
+  width:36px;height:1px;margin-bottom:28px;
+  opacity:0;transition:opacity 0.8s 0.44s;
+}
+#page-overlay.open .pg-divider{opacity:0.5}
+
+.pg-intro{
+  font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:400;
+  letter-spacing:0.2px;line-height:1.65;margin-bottom:22px;
+  opacity:0;transform:translateY(10px);transition:all 0.6s 0.5s;
+}
+#page-overlay.open .pg-intro{opacity:1;transform:translateY(0)}
+
+.pg-body{
+  font-family:'Inter',sans-serif;font-size:14px;line-height:1.95;font-weight:300;
+  margin-bottom:34px;opacity:0;letter-spacing:0.1px;
+  transform:translateY(10px);transition:all 0.6s 0.62s;
+}
+#page-overlay.open .pg-body{opacity:1;transform:translateY(0)}
+
+.pg-tags{
+  display:flex;flex-wrap:wrap;gap:7px;
+  opacity:0;transform:translateY(8px);transition:all 0.6s 0.74s;
+}
+#page-overlay.open .pg-tags{opacity:1;transform:translateY(0)}
+.pg-tag{
+  font-family:'Space Grotesk',sans-serif;font-size:8px;font-weight:500;
+  letter-spacing:2.5px;text-transform:uppercase;padding:7px 16px;
+  border:1px solid rgba(255,255,255,0.13);transition:border-color 0.25s;cursor:default;
+}
+.pg-tag:hover{border-color:rgba(255,255,255,0.32)}
+
+#zoom-flash{position:fixed;inset:0;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.25s}
+
+@media(max-width:640px){
+  #page-inner{padding:72px 20px 48px}
+  .pg-title{letter-spacing:1px}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="solar-hint">click to explore &nbsp;·&nbsp; drag to rotate</div>
+<button id="back-btn">&#8592;&nbsp;&nbsp;solar system</button>
+<div id="planet-label"><h1 id="pname"></h1><p id="psub"></p></div>
+<div id="click-hint">drag to spin &nbsp;·&nbsp; click to land</div>
+<div id="nav-dots"></div>
+<div id="tooltip"><div id="tooltip-inner"><h3 id="tt-name"></h3><p id="tt-tab"></p></div></div>
+<div id="zoom-flash"></div>
+<div id="page-overlay">
+  <div id="page-bg"></div>
+  <button id="page-close">&#8592;&nbsp;&nbsp;return to orbit</button>
+  <div id="page-inner"></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════ */
+const PLANETS = [
+  {
+    name:'Timber Hearth', tab:'Home',
+    orbitRadius:3.8, orbitSpeed:0.38, orbitPhase:0,
+    size:0.38,
+    bodyColor:0x214c10, emissive:0x071504, emissiveInt:0.24,
+    atmHex:0x50b444, atmOpacity:0.28, roughness:0.80,
+    ring:false,
+    pageGrad:['#040d02','#0a1e08','#0f2e10'], textCol:'#b8ebb0', accent:'#5ec455',
+    intro:'AI-First. Product-Minded. Always Building.',
+    body:"I'm Dev Saxena — a final-year ECE student at Manipal Institute of Technology and Product Intern at BetterPlace. AI-first product enthusiast with hands-on experience in building with AI tools, research, requirement writing, and growth strategy. At BetterPlace, I contributed to onboarding and workforce management products, drafting PRDs, analyzing product usage, and improving adoption. Communication is one of my strongest skills — I genuinely enjoy connecting with people and turning ideas into action.",
+    tags:['Product Intern @ BetterPlace','AI Tools','MIT Manipal ECE 2026','Product Management']
+  },
+  {
+    name:'Brittle Hollow', tab:'Experience',
+    orbitRadius:6.0, orbitSpeed:0.22, orbitPhase:1.2,
+    size:0.44,
+    bodyColor:0x320c84, emissive:0x0c0028, emissiveInt:0.28,
+    atmHex:0x6c34d8, atmOpacity:0.22, roughness:0.70,
+    ring:true, ringInner:1.7, ringOuter:2.45, ringColor:0x5522aa,
+    pageGrad:['#040010','#0c0028','#160048'], textCol:'#ccb8ff', accent:'#8850e8',
+    intro:'Real Work. Real Impact.',
+    body:"Product Intern at BetterPlace (Jun–Aug 2025): Analyzed complex onboarding workflows across multiple orgs, identified patterns to enable platform scale, and defined the LMS skills framework using NSQF and global standards. Improved learning experience by enhancing content delivery and play mechanics. Co-Founder of Duo Linton (May 2023–Dec 2024): Founded a clothing brand helping artists share and earn from their work. Curator & Marketing Head at TEDx MAHE (Apr–Sep 2025): Drove Instagram-first strategy, content planning, and visual storytelling. Marketing & Sponsorship Head at The Think Tank Manipal (Oct 2024–Sep 2025): Led a 20-member team, organized Fireside Chats and student podcasts, secured sponsorships.",
+    tags:['BetterPlace','Duo Linton','TEDx MAHE','The Think Tank Manipal']
+  },
+  {
+    name:"Giant's Deep", tab:'Skills',
+    orbitRadius:8.8, orbitSpeed:0.14, orbitPhase:2.5,
+    size:0.56,
+    bodyColor:0x0a3870, emissive:0x020a1c, emissiveInt:0.20,
+    atmHex:0x2278cc, atmOpacity:0.34, roughness:0.26,
+    ring:false,
+    pageGrad:['#01060f','#030c1e','#05142e'], textCol:'#96c8ff', accent:'#3680d8',
+    intro:'Depth Below the Storm',
+    body:"A broad toolkit built through real projects. Strong in digital marketing, communication, and visual storytelling. Hands-on with AI tools like Lovable, Framer, and Cursor. Experienced in PRD writing, growth strategy, and product research. Proficient in Canva and comfortable with Python basics and zero-code tools — including shipping a platformer game with GDevelop from scratch.",
+    tags:['Digital Marketing','Communication & Storytelling','AI Tools (Lovable/Framer/Cursor)','Product Research','Canva','Python Basics']
+  },
+  {
+    name:'The Interloper', tab:'Achievements',
+    orbitRadius:11.5, orbitSpeed:0.09, orbitPhase:4.1,
+    size:0.30,
+    bodyColor:0x8a2800, emissive:0x360600, emissiveInt:0.30,
+    atmHex:0xe04e10, atmOpacity:0.28, roughness:0.58,
+    ring:false,
+    pageGrad:['#100200','#260400','#380e00'], textCol:'#ffc080', accent:'#e86020',
+    intro:'Milestones Worth Marking',
+    body:"Developed PRDs and growth strategies for onboarding features at BetterPlace, improving adoption in pilot programs. Landed a ₹30,000 sponsorship for Fireside Chat at The Think Tank Manipal. Built a platformer game from scratch with zero prior coding experience using GDevelop. Certified in IT Automation using Python (Google), Digital Marketing Analytics (Coursera), and Marketing in a Digital World (Coursera).",
+    tags:['PRD & Growth @ BetterPlace','₹30k Sponsorship','GDevelop Platformer Game','3 Certifications']
+  },
+  {
+    name:'Ash Twin', tab:'Contact',
+    orbitRadius:14.2, orbitSpeed:0.06, orbitPhase:5.5,
+    size:0.35,
+    bodyColor:0x8a5810, emissive:0x2e1400, emissiveInt:0.22,
+    atmHex:0xcc9028, atmOpacity:0.24, roughness:0.90,
+    ring:false,
+    pageGrad:['#0e0800','#221400','#342000'], textCol:'#ffe090', accent:'#d4a030',
+    intro:'The Sand Is Always Falling',
+    body:"Always open to product roles, collabs, and conversations about building things that matter. Final-year student actively looking for full-time PM opportunities from 2026. Reach out — let's talk.",
+    tags:['devsaxena2003@gmail.com','+91-9109304535','linkedin.com/in/dev-saxena-650a27207/','devvv.bearblog.dev']
+  }
+];
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+// modes: 'solar' | 'zooming-in' | 'focused' | 'zooming-out'
+let MODE = 'solar';
+let focusedIdx = -1;
+let isDragging = false, lastMX = 0;
+let focusedRotVel = 0, focusedAutoRot = true, focusedAutoTimer = null;
+let dragDist = 0;
+
+/* ═══════════════════════════════════════════
+   THREE.JS SETUP
+═══════════════════════════════════════════ */
+let scene, camera, renderer;
+let sunMesh, sunCoreMesh;
+let focusGlowMesh, focusRingMesh;
+let sunLight, sunLight2;
+let focusedKeyLight, focusedFillLight;
+let planetMeshes = []; // {group, core, atm, orbitLine}
+let orbitLines = [];
+let clock = 0;
+
+// Camera animation state
+let camAnim = null; // {fromPos, toPos, fromTarget, toTarget, startTime, duration, onDone}
+const _camLookTarget = new THREE.Vector3();
+const _origin = new THREE.Vector3();
+
+function initThree() {
+  const canvas = document.getElementById('c');
+  renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x00000a, 1);
+  renderer.shadowMap.enabled = false;
+
+  scene = new THREE.Scene();
+
+  // Add starfield as background
+  buildStarfield();
+
+  camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.01, 2000);
+  camera.position.set(0, 18, 28);
+  camera.lookAt(0, 0, 0);
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xdde8ff, 0.055);
+  scene.add(ambient);
+  // Sun point light
+  sunLight = new THREE.PointLight(0xfff0d8, 4.0, 70);
+  sunLight.position.set(0, 0, 0);
+  scene.add(sunLight);
+  sunLight2 = new THREE.PointLight(0xff8822, 1.5, 35);
+  sunLight2.position.set(0, 0, 0);
+  scene.add(sunLight2);
+  // Rim
+  const rim = new THREE.DirectionalLight(0x203560, 0.3);
+  rim.position.set(-6, -2, -4);
+  scene.add(rim);
+  // Focused-mode lights (off by default)
+  focusedKeyLight = new THREE.DirectionalLight(0xfff8f0, 2.2);
+  focusedKeyLight.position.set(5, 4, 6);
+  focusedKeyLight.visible = false;
+  scene.add(focusedKeyLight);
+  focusedFillLight = new THREE.DirectionalLight(0x304070, 0.7);
+  focusedFillLight.position.set(-4, -1, -3);
+  focusedFillLight.visible = false;
+  scene.add(focusedFillLight);
+
+  // Focused-mode decorative: outer glow halo
+  const focusGlowGeo = new THREE.SphereGeometry(1.55, 24, 24);
+  const focusGlowMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0, side:THREE.FrontSide, depthWrite:false});
+  focusGlowMesh = new THREE.Mesh(focusGlowGeo, focusGlowMat);
+  focusGlowMesh.visible = false;
+  scene.add(focusGlowMesh);
+
+  // Focused-mode decorative: tilted orbit ring
+  const focusRingGeo = new THREE.TorusGeometry(1.85, 0.006, 4, 80);
+  const focusRingMat = new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0, depthWrite:false});
+  focusRingMesh = new THREE.Mesh(focusRingGeo, focusRingMat);
+  focusRingMesh.visible = false;
+  scene.add(focusRingMesh);
+
+  buildSun();
+  buildOrbitLines();
+  buildPlanets();
+}
+
+function buildStarfield() {
+  // Points geometry for stars
+  const count = 5500;
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    const r = 180 + Math.random() * 380;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    positions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i*3+2] = r * Math.cos(phi);
+    const rnd = Math.random();
+    const bright = 0.35 + Math.random() * 0.65;
+    if      (rnd < 0.07) { colors[i*3]=0.65*bright; colors[i*3+1]=0.78*bright; colors[i*3+2]=bright; } // blue-white
+    else if (rnd < 0.12) { colors[i*3]=bright; colors[i*3+1]=0.85*bright; colors[i*3+2]=0.55*bright; } // warm yellow
+    else if (rnd < 0.15) { colors[i*3]=bright; colors[i*3+1]=0.6*bright;  colors[i*3+2]=0.5*bright;  } // orange-red
+    else { colors[i*3]=bright*0.95; colors[i*3+1]=bright*0.95; colors[i*3+2]=bright; }                  // white-blue
+    sizes[i] = Math.random() < 0.04 ? 1.2 : Math.random() < 0.15 ? 0.7 : 0.38;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  const mat = new THREE.PointsMaterial({size:0.45, vertexColors:true, sizeAttenuation:true});
+  scene.add(new THREE.Points(geo, mat));
+}
+
+function buildSun() {
+  // Core
+  const cGeo = new THREE.SphereGeometry(1.1, 32, 32);
+  const cMat = new THREE.MeshStandardMaterial({
+    color: 0xffe040, emissive: 0xff8800, emissiveIntensity: 2.2,
+    roughness: 0.55, metalness: 0.0
+  });
+  sunCoreMesh = new THREE.Mesh(cGeo, cMat);
+  scene.add(sunCoreMesh);
+
+  // Surface texture via displacement bumps
+  const sGeo = new THREE.SphereGeometry(1.14, 40, 40);
+  const sMat = new THREE.MeshStandardMaterial({
+    color: 0xffb800, emissive: 0xff5500, emissiveIntensity: 1.1,
+    roughness: 1.0, metalness: 0.0, transparent: true, opacity: 0.65
+  });
+  sunMesh = new THREE.Mesh(sGeo, sMat);
+  scene.add(sunMesh);
+
+  // Corona layers
+  const coronaColors = [0xff9900, 0xff6600, 0xff3300, 0xff1100];
+  const coronaOpacity = [0.10, 0.065, 0.038, 0.018];
+  for (let i = 0; i < 4; i++) {
+    const r = 1.22 + i * 0.28;
+    const gGeo = new THREE.SphereGeometry(r, 24, 24);
+    const gMat = new THREE.MeshBasicMaterial({
+      color: coronaColors[i], transparent: true, opacity: coronaOpacity[i],
+      side: THREE.FrontSide, depthWrite: false
+    });
+    scene.add(new THREE.Mesh(gGeo, gMat));
+  }
+}
+
+function buildOrbitLines() {
+  PLANETS.forEach(p => {
+    const pts = [];
+    const seg = 128;
+    for (let i = 0; i <= seg; i++) {
+      const a = (i / seg) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * p.orbitRadius, 0, Math.sin(a) * p.orbitRadius));
+    }
+    const geo = new THREE.BufferGeometry().setFromPoints(pts);
+    const mat = new THREE.LineBasicMaterial({color:0x2a3c58, transparent:true, opacity:0.22});
+    const line = new THREE.Line(geo, mat);
+    scene.add(line);
+    orbitLines.push(line);
+  });
+}
+
+function buildPlanets() {
+  PLANETS.forEach((p, i) => {
+    const group = new THREE.Group();
+
+    // Core sphere
+    const geo = new THREE.SphereGeometry(1.0, 48, 48);
+    const mat = new THREE.MeshStandardMaterial({
+      color: p.bodyColor, emissive: p.emissive,
+      emissiveIntensity: p.emissiveInt, roughness: p.roughness, metalness: 0.04
+    });
+    const core = new THREE.Mesh(geo, mat);
+    group.add(core);
+
+    // Atmosphere layers
+    const aGeo = new THREE.SphereGeometry(1.14, 24, 24);
+    const aMat = new THREE.MeshStandardMaterial({
+      color: p.atmHex, transparent:true, opacity: p.atmOpacity * 0.65,
+      side: THREE.FrontSide, depthWrite: false
+    });
+    group.add(new THREE.Mesh(aGeo, aMat));
+    const aiGeo = new THREE.SphereGeometry(1.06, 24, 24);
+    const aiMat = new THREE.MeshStandardMaterial({
+      color: p.atmHex, transparent:true, opacity: p.atmOpacity * 0.4,
+      side: THREE.BackSide, depthWrite: false
+    });
+    group.add(new THREE.Mesh(aiGeo, aiMat));
+
+    // Surface details
+    addSurface(group, core, p, i);
+
+    // Ring
+    if (p.ring) {
+      const rg = new THREE.RingGeometry(p.ringInner, p.ringOuter, 48);
+      const rm = new THREE.MeshBasicMaterial({color:p.ringColor, transparent:true, opacity:0.32, side:THREE.DoubleSide, depthWrite:false});
+      const ring = new THREE.Mesh(rg, rm); ring.rotation.x = Math.PI/2.6; ring.rotation.z = 0.1;
+      group.add(ring);
+      const rg2 = new THREE.RingGeometry(p.ringInner-0.08, p.ringInner+0.04, 48);
+      const rm2 = new THREE.MeshBasicMaterial({color:0xaa88ff, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false});
+      const ring2 = new THREE.Mesh(rg2, rm2); ring2.rotation.x = Math.PI/2.6; ring2.rotation.z = 0.1;
+      group.add(ring2);
+    }
+
+    // Scale to orbital display size
+    group.scale.setScalar(p.size);
+
+    // Initial orbit position
+    const angle = p.orbitPhase;
+    group.position.set(Math.cos(angle)*p.orbitRadius, 0, Math.sin(angle)*p.orbitRadius);
+
+    scene.add(group);
+    const moons = group.children.filter(c => c.userData && c.userData.isMoon);
+    planetMeshes.push({group, core, mat, p, angle: p.orbitPhase, moons});
+  });
+}
+
+function addSurface(group, core, p, idx) {
+  // Helper to place a blob on surface
+  const place = (geo, mat, radius) => {
+    const m = new THREE.Mesh(geo, mat);
+    const phi = Math.random()*Math.PI*2, theta = Math.random()*Math.PI;
+    const r = radius || 0.99;
+    m.position.set(r*Math.sin(theta)*Math.cos(phi), r*Math.cos(theta), r*Math.sin(theta)*Math.sin(phi));
+    return m;
+  };
+
+  if (idx === 0) { // Timber Hearth
+    // Forest patches - multiple green continent blobs
+    for (let i = 0; i < 22; i++) {
+      const s = 0.04 + Math.random()*0.1;
+      const g = new THREE.SphereGeometry(s, 8, 8);
+      const m = new THREE.MeshStandardMaterial({color: i%3===0?0x1e5210:i%3===1?0x2d6b18:0x3a8020, roughness:1, emissive:0x081505, emissiveIntensity:0.08});
+      group.add(place(g, m, 0.99));
+    }
+    // Snow caps
+    const scG = new THREE.SphereGeometry(0.22, 20, 20);
+    const scM = new THREE.MeshStandardMaterial({color:0xeef6ee, roughness:0.5});
+    const sc = new THREE.Mesh(scG, scM); sc.position.y = 0.92; group.add(sc);
+    const sc2G = new THREE.SphereGeometry(0.16, 16, 16);
+    const sc2 = new THREE.Mesh(sc2G, scM.clone()); sc2.position.y = -0.90; group.add(sc2);
+    // Tiny moon
+    const mG = new THREE.SphereGeometry(0.12, 16, 16);
+    const mM = new THREE.MeshStandardMaterial({color:0x887866, roughness:0.95});
+    const moon = new THREE.Mesh(mG, mM);
+    moon.position.set(1.8, 0.3, 0); moon.userData = {isMoon:true, or:1.8, oa:0, os:0.28};
+    group.add(moon);
+    // Subtle river lines (thin tori)
+    for (let i = 0; i < 3; i++) {
+      const tG = new THREE.TorusGeometry(0.55+i*0.18, 0.008, 6, 40);
+      const tM = new THREE.MeshBasicMaterial({color:0x4499cc, transparent:true, opacity:0.35});
+      const t = new THREE.Mesh(tG, tM);
+      t.rotation.x = Math.random()*Math.PI; t.rotation.z = Math.random()*Math.PI;
+      group.add(t);
+    }
+  }
+
+  if (idx === 1) { // Brittle Hollow
+    // Glowing crack vents
+    for (let i = 0; i < 14; i++) {
+      const s = 0.04 + Math.random()*0.06;
+      const g = new THREE.SphereGeometry(s, 6, 6);
+      const intensity = 0.5 + Math.random()*0.5;
+      const m = new THREE.MeshStandardMaterial({color:0x05000c, roughness:1, emissive:0x5500cc, emissiveIntensity:intensity});
+      group.add(place(g, m, 0.98));
+    }
+    // Dark patches (craters)
+    for (let i = 0; i < 8; i++) {
+      const g = new THREE.CircleGeometry(0.08+Math.random()*0.1, 12);
+      const m = new THREE.MeshStandardMaterial({color:0x0a0018, roughness:1});
+      const mesh = new THREE.Mesh(g, m);
+      const phi = Math.random()*Math.PI*2, theta = Math.random()*Math.PI;
+      const r = 1.001;
+      mesh.position.set(r*Math.sin(theta)*Math.cos(phi), r*Math.cos(theta), r*Math.sin(theta)*Math.sin(phi));
+      mesh.lookAt(mesh.position.clone().multiplyScalar(2));
+      group.add(mesh);
+    }
+    // Singularity core shimmer
+    const bhG = new THREE.SphereGeometry(0.18, 16, 16);
+    const bhM = new THREE.MeshStandardMaterial({color:0x000000, emissive:0x220066, emissiveIntensity:0.6, roughness:0, metalness:0.9});
+    group.add(new THREE.Mesh(bhG, bhM));
+    // Fracture lines
+    for (let i = 0; i < 4; i++) {
+      const pts = [];
+      const startTheta = Math.random()*Math.PI, startPhi = Math.random()*Math.PI*2;
+      for (let j = 0; j < 10; j++) {
+        const t2 = startTheta + (Math.random()-0.5)*0.8;
+        const p2 = startPhi + j*0.15 + (Math.random()-0.5)*0.2;
+        const r = 1.005;
+        pts.push(new THREE.Vector3(r*Math.sin(t2)*Math.cos(p2), r*Math.cos(t2), r*Math.sin(t2)*Math.sin(p2)));
+      }
+      const lg = new THREE.BufferGeometry().setFromPoints(pts);
+      const lm = new THREE.LineBasicMaterial({color:0x7733ff, transparent:true, opacity:0.6});
+      group.add(new THREE.Line(lg, lm));
+    }
+  }
+
+  if (idx === 2) { // Giant's Deep
+    // Reflective ocean overlay
+    const oG = new THREE.SphereGeometry(1.01, 24, 24);
+    const oM = new THREE.MeshStandardMaterial({color:0x0b3d7a, roughness:0.05, metalness:0.35, transparent:true, opacity:0.82});
+    group.add(new THREE.Mesh(oG, oM));
+    // Storm band rings
+    for (let i = 0; i < 7; i++) {
+      const r = 1.015;
+      const bG = new THREE.TorusGeometry(r, 0.018+Math.random()*0.025, 8, 48);
+      const shade = 0.45 + Math.random()*0.4;
+      const bM = new THREE.MeshBasicMaterial({color:new THREE.Color(0.1*shade, 0.45*shade, 0.9*shade), transparent:true, opacity:0.55+Math.random()*0.25});
+      const b = new THREE.Mesh(bG, bM);
+      b.rotation.x = Math.PI/2; b.position.y = -0.7 + i*0.23;
+      group.add(b);
+    }
+    // Island clusters
+    for (let i = 0; i < 7; i++) {
+      const s = 0.04+Math.random()*0.06;
+      const g = new THREE.SphereGeometry(s, 8, 8);
+      const m = new THREE.MeshStandardMaterial({color:i%2===0?0x1e5c2a:0x2a7a38, roughness:1});
+      group.add(place(g, m, 1.0));
+    }
+    // Cyclone eye
+    const cG = new THREE.CircleGeometry(0.12, 24);
+    const cM = new THREE.MeshBasicMaterial({color:0x082255, transparent:true, opacity:0.7, side:THREE.DoubleSide});
+    const cy = new THREE.Mesh(cG, cM);
+    cy.position.set(0.3, 1.002, 0.3); cy.lookAt(cy.position.clone().multiplyScalar(2));
+    group.add(cy);
+    // Ring of cyclone
+    const crG = new THREE.RingGeometry(0.12, 0.18, 32);
+    const crM = new THREE.MeshBasicMaterial({color:0x1144aa, transparent:true, opacity:0.45, side:THREE.DoubleSide});
+    const cr = new THREE.Mesh(crG, crM);
+    cr.position.set(0.3, 1.002, 0.3); cr.lookAt(cr.position.clone().multiplyScalar(2));
+    group.add(cr);
+  }
+
+  if (idx === 3) { // Interloper
+    // Ice shell chunks
+    for (let i = 0; i < 12; i++) {
+      const s = 0.06+Math.random()*0.1;
+      const g = new THREE.SphereGeometry(s, 8, 8);
+      const m = new THREE.MeshStandardMaterial({color:0xc0ddf5, roughness:0.15, metalness:0.45, transparent:true, opacity:0.85});
+      group.add(place(g, m, 0.97 + Math.random()*0.04));
+    }
+    // Ice surface crack network
+    for (let i = 0; i < 6; i++) {
+      const pts = [];
+      const s0 = Math.random()*Math.PI, p0 = Math.random()*Math.PI*2;
+      for (let j = 0; j < 8; j++) {
+        const t2 = s0 + (Math.random()-0.5)*0.9;
+        const pp = p0 + j*0.2 + (Math.random()-0.5)*0.3;
+        pts.push(new THREE.Vector3(1.01*Math.sin(t2)*Math.cos(pp), 1.01*Math.cos(t2), 1.01*Math.sin(t2)*Math.sin(pp)));
+      }
+      const lg = new THREE.BufferGeometry().setFromPoints(pts);
+      const lm = new THREE.LineBasicMaterial({color:0x88bbff, transparent:true, opacity:0.5});
+      group.add(new THREE.Line(lg, lm));
+    }
+    // Glowing inner core (fire through ice)
+    const cG = new THREE.SphereGeometry(0.52, 20, 20);
+    const cM = new THREE.MeshStandardMaterial({color:0xff3300, emissive:0xff1100, emissiveIntensity:1.2, transparent:true, opacity:0.78});
+    group.add(new THREE.Mesh(cG, cM));
+    const c2G = new THREE.SphereGeometry(0.28, 12, 12);
+    const c2M = new THREE.MeshStandardMaterial({color:0xffcc00, emissive:0xffee00, emissiveIntensity:2.5});
+    group.add(new THREE.Mesh(c2G, c2M));
+    // Comet tail debris
+    for (let i = 0; i < 8; i++) {
+      const dG = new THREE.SphereGeometry(0.025+Math.random()*0.04, 6, 6);
+      const dM = new THREE.MeshBasicMaterial({color:0xffbbaa, transparent:true, opacity:0.15+Math.random()*0.35});
+      const d = new THREE.Mesh(dG, dM);
+      d.position.set(1.4+i*0.3+Math.random()*0.25, (Math.random()-0.5)*0.28, (Math.random()-0.5)*0.28);
+      group.add(d);
+    }
+    // Outer ice skin
+    const skinG = new THREE.SphereGeometry(1.0, 24, 24);
+    const skinM = new THREE.MeshStandardMaterial({color:0xaaccee, roughness:0.12, metalness:0.2, transparent:true, opacity:0.35});
+    group.add(new THREE.Mesh(skinG, skinM));
+  }
+
+  if (idx === 4) { // Ash Twin
+    // Sandy surface overlay
+    const sandG = new THREE.SphereGeometry(1.005, 24, 24);
+    const sandM = new THREE.MeshStandardMaterial({color:0xc89030, roughness:1, metalness:0.0, transparent:true, opacity:0.6});
+    group.add(new THREE.Mesh(sandG, sandM));
+    // Ancient stone towers
+    for (let i = 0; i < 18; i++) {
+      const h = 0.08+Math.random()*0.14;
+      const tG = new THREE.CylinderGeometry(0.015, 0.03, h, 5);
+      const tM = new THREE.MeshStandardMaterial({color:i%2===0?0xc89830:0xa07020, roughness:1});
+      const t = new THREE.Mesh(tG, tM);
+      const phi = Math.random()*Math.PI*2, theta = Math.random()*Math.PI, r = 1.0;
+      const nx=Math.sin(theta)*Math.cos(phi), ny=Math.cos(theta), nz=Math.sin(theta)*Math.sin(phi);
+      t.position.set(r*nx, r*ny, r*nz); t.lookAt(t.position.clone().multiplyScalar(2));
+      group.add(t);
+    }
+    // Sand plumes / craters
+    for (let i = 0; i < 10; i++) {
+      const cG2 = new THREE.CircleGeometry(0.05+Math.random()*0.08, 10);
+      const cM2 = new THREE.MeshStandardMaterial({color:0x805018, roughness:1, transparent:true, opacity:0.7, side:THREE.DoubleSide});
+      const cr = new THREE.Mesh(cG2, cM2);
+      const phi2=Math.random()*Math.PI*2, theta2=Math.random()*Math.PI;
+      cr.position.set(1.003*Math.sin(theta2)*Math.cos(phi2), 1.003*Math.cos(theta2), 1.003*Math.sin(theta2)*Math.sin(phi2));
+      cr.lookAt(cr.position.clone().multiplyScalar(2)); group.add(cr);
+    }
+    // Sand rings (ejected material)
+    for (let i = 0; i < 3; i++) {
+      const r = 1.35+i*0.22;
+      const dG = new THREE.TorusGeometry(r, 0.025+Math.random()*0.02, 6, 48);
+      const dM = new THREE.MeshBasicMaterial({color:0xd4a040, transparent:true, opacity:0.12-i*0.03});
+      const d = new THREE.Mesh(dG, dM); d.rotation.x = Math.PI/2+Math.random()*0.3; d.rotation.z = Math.random()*0.4;
+      group.add(d);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION LOOP
+═══════════════════════════════════════════ */
+function animate() {
+  requestAnimationFrame(animate);
+  clock += 0.005;
+
+  // Animate sun
+  if (sunMesh) {
+    sunMesh.rotation.y += 0.004;
+    sunCoreMesh.rotation.y -= 0.002;
+  }
+
+  if (MODE === 'solar' || MODE === 'zooming-out') {
+    // Orbit all planets
+    planetMeshes.forEach((pm, i) => {
+      pm.angle += PLANETS[i].orbitSpeed * 0.004;
+      const x = Math.cos(pm.angle) * PLANETS[i].orbitRadius;
+      const z = Math.sin(pm.angle) * PLANETS[i].orbitRadius;
+      pm.group.position.set(x, 0, z);
+      pm.group.rotation.y += 0.004;
+      // Moons
+      pm.moons.forEach(c => {
+        c.userData.oa += c.userData.os * 0.005;
+        c.position.x = Math.cos(c.userData.oa) * c.userData.or;
+        c.position.z = Math.sin(c.userData.oa) * c.userData.or;
+      });
+    });
+    // Tilt camera slightly
+    const targetY = 16 + Math.sin(clock * 0.2) * 1.5;
+    camera.position.y += (targetY - camera.position.y) * 0.01;
+  }
+
+  if (MODE === 'focused') {
+    const pm = planetMeshes[focusedIdx];
+    if (pm) {
+      if (focusedAutoRot) pm.group.rotation.y += 0.0025;
+      pm.group.rotation.y += focusedRotVel;
+      focusedRotVel *= 0.94;
+      pm.group.position.y = Math.sin(clock) * 0.06;
+      // Animate focused decoratives
+      focusGlowMesh.material.opacity = 0.055 + Math.sin(clock * 1.8) * 0.025;
+      focusGlowMesh.position.y = pm.group.position.y;
+      focusRingMesh.rotation.y += 0.003;
+      focusRingMesh.position.y = pm.group.position.y;
+      // Moon orbit
+      pm.moons.forEach(c => {
+        c.userData.oa += c.userData.os * 0.006;
+        c.position.x = Math.cos(c.userData.oa) * c.userData.or;
+        c.position.z = Math.sin(c.userData.oa) * c.userData.or;
+      });
+    }
+  }
+
+  // Camera interpolation
+  if (camAnim) {
+    const t = Math.min((Date.now() - camAnim.startTime) / camAnim.duration, 1);
+    const e = t < 0.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1;
+    camera.position.lerpVectors(camAnim.fromPos, camAnim.toPos, e);
+    _camLookTarget.lerpVectors(camAnim.fromTarget, camAnim.toTarget, e);
+    camera.lookAt(_camLookTarget);
+    if (t >= 1) {
+      camera.position.copy(camAnim.toPos);
+      camera.lookAt(camAnim.toTarget);
+      const cb = camAnim.onDone;
+      camAnim = null;
+      if (cb) cb();
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+/* ═══════════════════════════════════════════
+   ZOOM INTO PLANET
+═══════════════════════════════════════════ */
+function zoomToPlanet(idx) {
+  if (MODE !== 'solar') return;
+  MODE = 'zooming-in';
+  focusedIdx = idx;
+
+  const pm = planetMeshes[idx];
+  const worldPos = new THREE.Vector3();
+  pm.group.getWorldPosition(worldPos);
+
+  // Hide tooltip immediately
+  tooltip.classList.remove('show');
+
+  // Hide orbit lines + other planets
+  orbitLines.forEach(l => { l.material.opacity = 0; });
+  planetMeshes.forEach((p2, j) => {
+    if (j !== idx) {
+      fadePlanet(p2, 0);
+    }
+  });
+  sunMesh.visible = false; sunCoreMesh.visible = false;
+
+  // Scale up planet to focused size
+  const scale = PLANETS[idx].size;
+  const targetScale = 1.0 / scale;
+
+  // Animate scale
+  const startScale = pm.group.scale.x;
+  const startPos = pm.group.position.clone();
+  const startTime = Date.now();
+  const scaleDur = 900;
+  function scaleStep() {
+    const t = Math.min((Date.now()-startTime)/scaleDur, 1);
+    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
+    pm.group.scale.setScalar(startScale + (targetScale - startScale)*e);
+    pm.group.position.lerp(_origin, e*0.08);
+    if (t < 1) requestAnimationFrame(scaleStep);
+  }
+  scaleStep();
+
+  // Move camera — distance scales with planet size so all fill the frame consistently
+  const camDist = (1.0 / PLANETS[idx].size) * 3.0;
+  const fromPos = camera.position.clone();
+  const fromTarget = new THREE.Vector3(worldPos.x, worldPos.y, worldPos.z);
+  const toPos = new THREE.Vector3(0, camDist * 0.1, camDist);
+  const toTarget = new THREE.Vector3(0, 0, 0);
+
+  camAnim = {
+    fromPos, toPos, fromTarget, toTarget,
+    startTime: Date.now(), duration: 900,
+    onDone: () => {
+      pm.group.position.set(0, 0, 0);
+      pm.group.scale.setScalar(targetScale);
+      camera.position.set(0, camDist * 0.1, camDist);
+      // Switch lighting to focused mode
+      sunLight.visible = false;
+      sunLight2.visible = false;
+      focusedKeyLight.visible = true;
+      focusedFillLight.visible = true;
+      // Show focused decoratives
+      const pData = PLANETS[idx];
+      focusGlowMesh.material.color.setHex(pData.atmHex);
+      focusGlowMesh.scale.setScalar(targetScale);
+      focusGlowMesh.visible = true;
+      focusRingMesh.material.color.setHex(pData.atmHex);
+      focusRingMesh.material.opacity = 0.45;
+      focusRingMesh.scale.setScalar(targetScale);
+      focusRingMesh.rotation.set(0.35, 0, 0.2);
+      focusRingMesh.visible = true;
+      MODE = 'focused';
+      showFocusedUI(idx);
+    }
+  };
+}
+
+function fadePlanet(pm, targetOpacity) {
+  const children = pm.group.children.filter(c => c.material);
+  if (!children.length) return;
+  const starts = children.map(c => c.material.opacity !== undefined ? c.material.opacity : 1);
+  children.forEach(c => { c.material.transparent = true; });
+  const startT = Date.now();
+  function step() {
+    const t = Math.min((Date.now() - startT) / 500, 1);
+    children.forEach((c, i) => { c.material.opacity = starts[i] + (targetOpacity - starts[i]) * t; });
+    if (t < 1) requestAnimationFrame(step);
+  }
+  step();
+}
+
+function zoomBackToSolar() {
+  if (MODE !== 'focused') return;
+  MODE = 'zooming-out';
+
+  hideFocusedUI();
+  focusGlowMesh.visible = false;
+  focusRingMesh.visible = false;
+
+  const pm = planetMeshes[focusedIdx];
+  const pData = PLANETS[focusedIdx];
+
+  // Animate back
+  const fromPos = camera.position.clone();
+  const toPos = new THREE.Vector3(0, 18, 28);
+  const toTarget = new THREE.Vector3(0, 0, 0);
+  const fromTarget = new THREE.Vector3(0, 0, 0);
+
+  // Reset planet scale and position during zoom
+  const targetScale = pData.size;
+  const currentScale = pm.group.scale.x;
+  const startTime = Date.now();
+  const dur = 900;
+  function scaleBack() {
+    const t = Math.min((Date.now()-startTime)/dur, 1);
+    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
+    pm.group.scale.setScalar(currentScale + (targetScale - currentScale)*e);
+    if (t < 1) requestAnimationFrame(scaleBack);
+  }
+  scaleBack();
+
+  camAnim = {
+    fromPos, toPos, fromTarget, toTarget,
+    startTime: Date.now(), duration: 900,
+    onDone: () => {
+      focusedIdx = -1;
+      MODE = 'solar';
+      // Restore solar lighting
+      sunLight.visible = true;
+      sunLight2.visible = true;
+      focusedKeyLight.visible = false;
+      focusedFillLight.visible = false;
+      // Show everything again
+      orbitLines.forEach(l => { l.material.opacity = 0.35; });
+      planetMeshes.forEach(p2 => fadePlanet(p2, 1));
+      sunMesh.visible = true; sunCoreMesh.visible = true;
+      document.getElementById('solar-hint').style.opacity = '1';
+    }
+  };
+}
+
+/* ═══════════════════════════════════════════
+   UI UPDATES
+═══════════════════════════════════════════ */
+function showFocusedUI(idx) {
+  const p = PLANETS[idx];
+  document.getElementById('pname').textContent = p.name;
+  document.getElementById('psub').textContent = p.tab;
+  document.getElementById('planet-label').classList.add('visible');
+  document.getElementById('click-hint').classList.add('visible');
+  document.getElementById('nav-dots').classList.add('visible');
+  document.getElementById('back-btn').classList.add('visible');
+  document.getElementById('solar-hint').style.opacity = '0';
+  updateDots(idx);
+}
+
+function hideFocusedUI() {
+  document.getElementById('planet-label').classList.remove('visible');
+  document.getElementById('click-hint').classList.remove('visible');
+  document.getElementById('nav-dots').classList.remove('visible');
+  document.getElementById('back-btn').classList.remove('visible');
+}
+
+function updateDots(idx) {
+  document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+}
+
+function buildNav() {
+  const dotsEl = document.getElementById('nav-dots');
+  PLANETS.forEach((p, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.title = p.name;
+    dot.addEventListener('click', () => {
+      if (MODE !== 'focused') return;
+      switchFocused(i);
+    });
+    dotsEl.appendChild(dot);
+  });
+}
+
+function switchFocused(newIdx) {
+  if (newIdx === focusedIdx || MODE !== 'focused') return;
+  const oldPm = planetMeshes[focusedIdx];
+  const newPm = planetMeshes[newIdx];
+  const pData = PLANETS[newIdx];
+
+  // Fade out old, scale down
+  fadePlanet(oldPm, 0);
+  const oldScale = oldPm.group.scale.x;
+  const newTargetScale = 1.0 / pData.size;
+  const st = Date.now(), dur = 700;
+
+  oldPm.group.userData.switching = true;
+  function switchAnim() {
+    const t = Math.min((Date.now()-st)/dur, 1);
+    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
+    oldPm.group.scale.setScalar(oldScale * (1-e));
+    newPm.group.scale.setScalar(newTargetScale * e);
+    if (t < 1) requestAnimationFrame(switchAnim);
+    else {
+      oldPm.group.scale.setScalar(PLANETS[focusedIdx].size);
+      oldPm.group.position.set(planetMeshes[focusedIdx].lastOrbitPos?.x||0, 0, planetMeshes[focusedIdx].lastOrbitPos?.z||0);
+      focusedIdx = newIdx;
+      newPm.group.position.set(0, 0, 0);
+      fadePlanet(newPm, 1);
+      document.getElementById('pname').textContent = PLANETS[newIdx].name;
+      document.getElementById('psub').textContent = PLANETS[newIdx].tab;
+      updateDots(newIdx);
+      // Update focused decoratives for new planet
+      focusGlowMesh.material.color.setHex(PLANETS[newIdx].atmHex);
+      focusGlowMesh.scale.setScalar(newTargetScale);
+      focusRingMesh.material.color.setHex(PLANETS[newIdx].atmHex);
+      focusRingMesh.scale.setScalar(newTargetScale);
+    }
+  }
+  newPm.group.position.set(0, 0, 0);
+  newPm.group.scale.setScalar(0.01);
+  switchAnim();
+}
+
+function openPage(idx) {
+  const p = PLANETS[idx];
+  document.getElementById('page-bg').style.background = `linear-gradient(160deg,${p.pageGrad[0]} 0%,${p.pageGrad[1]} 50%,${p.pageGrad[2]} 100%)`;
+  document.getElementById('page-close').style.color = p.textCol;
+  document.getElementById('page-close').style.borderColor = p.accent+'55';
+  document.getElementById('page-inner').innerHTML = `
+    <div class="pg-content">
+      <div class="pg-eyebrow" style="color:${p.accent}">${p.tab}&nbsp;&nbsp;·&nbsp;&nbsp;${p.name}</div>
+      <div class="pg-title" style="color:${p.textCol}">${p.name}</div>
+      <div class="pg-tab" style="color:${p.accent};border-color:${p.accent}44">${p.tab}</div>
+      <div class="pg-divider" style="background:${p.accent}"></div>
+      <div class="pg-intro" style="color:${p.accent}">${p.intro}</div>
+      <div class="pg-body" style="color:${p.textCol}">${p.body}</div>
+      <div class="pg-tags">${p.tags.map(t=>`<span class="pg-tag" style="color:${p.textCol};border-color:${p.accent}38">${t}</span>`).join('')}</div>
+    </div>
+  `;
+  const flash = document.getElementById('zoom-flash');
+  flash.style.background = p.accent; flash.style.opacity = '0.1';
+  setTimeout(() => { flash.style.opacity = '0'; document.getElementById('page-overlay').classList.add('open'); }, 200);
+}
+
+/* ═══════════════════════════════════════════
+   RAYCASTING (click detection)
+═══════════════════════════════════════════ */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+function getHoveredPlanet(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const meshes = planetMeshes.map(pm => pm.core);
+  const hits = raycaster.intersectObjects(meshes);
+  if (hits.length > 0) {
+    return meshes.indexOf(hits[0].object);
+  }
+  return -1;
+}
+
+/* ═══════════════════════════════════════════
+   EVENTS
+═══════════════════════════════════════════ */
+const tooltip = document.getElementById('tooltip');
+const canvas = document.getElementById('c');
+
+canvas.addEventListener('mousemove', e => {
+  if (MODE === 'solar') {
+    const idx = getHoveredPlanet(e);
+    if (idx >= 0) {
+      canvas.style.cursor = 'pointer';
+      document.getElementById('tt-name').textContent = PLANETS[idx].name;
+      document.getElementById('tt-tab').textContent = PLANETS[idx].tab;
+      tooltip.style.left = e.clientX + 'px';
+      tooltip.style.top = (e.clientY - 60) + 'px';
+      tooltip.classList.add('show');
+    } else {
+      canvas.style.cursor = isDragging ? 'grabbing' : 'default';
+      tooltip.classList.remove('show');
+    }
+  }
+  if (MODE === 'focused' && isDragging) {
+    const dx = e.clientX - lastMX;
+    if (planetMeshes[focusedIdx]) planetMeshes[focusedIdx].group.rotation.y += dx * 0.012;
+    focusedRotVel = dx * 0.006;
+    lastMX = e.clientX;
+    dragDist += Math.abs(dx);
+  }
+  if (MODE === 'solar' && isDragging) {
+    const dx = e.clientX - lastMX;
+    dragDist += Math.abs(dx);
+    // Rotate all planet positions around Y
+    const angle = dx * 0.005;
+    planetMeshes.forEach(pm => {
+      const x = pm.group.position.x, z = pm.group.position.z;
+      pm.group.position.x = x*Math.cos(angle) - z*Math.sin(angle);
+      pm.group.position.z = x*Math.sin(angle) + z*Math.cos(angle);
+    });
+    lastMX = e.clientX;
+  }
+});
+
+canvas.addEventListener('mousedown', e => {
+  isDragging = true; lastMX = e.clientX; dragDist = 0;
+  canvas.style.cursor = 'grabbing';
+  if (MODE === 'focused') { if (focusedAutoTimer) clearTimeout(focusedAutoTimer); focusedAutoRot = false; }
+});
+
+canvas.addEventListener('mouseup', e => {
+  isDragging = false; canvas.style.cursor = '';
+  if (MODE === 'focused') {
+    focusedAutoTimer = setTimeout(() => { focusedAutoRot = true; }, 3500);
+    if (dragDist < 8) {
+      const W = window.innerWidth; const cx = e.clientX;
+      if (cx > W*0.2 && cx < W*0.8) openPage(focusedIdx);
+    }
+  }
+  if (MODE === 'solar' && dragDist < 8) {
+    const idx = getHoveredPlanet(e);
+    if (idx >= 0) zoomToPlanet(idx);
+  }
+});
+
+canvas.addEventListener('wheel', e => {
+  if (MODE !== 'focused') return;
+  e.preventDefault();
+  // Switch planet via scroll
+  if (e.deltaY > 0) switchFocused((focusedIdx+1)%PLANETS.length);
+  else switchFocused((focusedIdx-1+PLANETS.length)%PLANETS.length);
+}, {passive:false});
+
+document.getElementById('back-btn').addEventListener('click', zoomBackToSolar);
+document.getElementById('page-close').addEventListener('click', () => document.getElementById('page-overlay').classList.remove('open'));
+
+// Touch
+let tStartX = 0;
+canvas.addEventListener('touchstart', e => {
+  tStartX = e.touches[0].clientX; dragDist=0; isDragging=true; lastMX=tStartX;
+  if (MODE==='focused') { if (focusedAutoTimer) clearTimeout(focusedAutoTimer); focusedAutoRot=false; }
+}, {passive:true});
+canvas.addEventListener('touchmove', e => {
+  const dx = e.touches[0].clientX - lastMX; dragDist+=Math.abs(dx);
+  if (MODE==='focused' && planetMeshes[focusedIdx]) {
+    planetMeshes[focusedIdx].group.rotation.y += dx*0.012;
+    focusedRotVel = dx * 0.006;
+  }
+  if (MODE==='solar') {
+    const angle = dx * 0.005;
+    planetMeshes.forEach(pm => {
+      const x = pm.group.position.x, z = pm.group.position.z;
+      pm.group.position.x = x*Math.cos(angle) - z*Math.sin(angle);
+      pm.group.position.z = x*Math.sin(angle) + z*Math.cos(angle);
+    });
+  }
+  lastMX = e.touches[0].clientX;
+}, {passive:true});
+canvas.addEventListener('touchend', e => {
+  isDragging=false;
+  const dx = e.changedTouches[0].clientX - tStartX;
+  if (MODE==='focused') {
+    focusedAutoTimer = setTimeout(() => { focusedAutoRot=true; }, 3500);
+    if (Math.abs(dx)>50) { if(dx<0) switchFocused((focusedIdx+1)%PLANETS.length); else switchFocused((focusedIdx-1+PLANETS.length)%PLANETS.length); }
+    else if (dragDist<10) openPage(focusedIdx);
+  }
+  if (MODE==='solar' && dragDist<10) {
+    const touch = e.changedTouches[0];
+    const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
+    if (idx >= 0) zoomToPlanet(idx);
+  }
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+buildNav();
+initThree();
+animate();
+</script>
+</body>
+</html>
