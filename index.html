@@ -960,13 +960,24 @@ function switchFocused(newIdx) {
   const newPm = planetMeshes[newIdx];
   const pData = PLANETS[newIdx];
 
-  // Fade out old, scale down
   fadePlanet(oldPm, 0);
   const oldScale = oldPm.group.scale.x;
   const newTargetScale = 1.0 / pData.size;
+  const newCamDist = (1.0 / pData.size) * 4.0;
   const st = Date.now(), dur = 700;
 
-  oldPm.group.userData.switching = true;
+  // Move camera to the correct distance for the new planet
+  camAnim = {
+    fromPos: camera.position.clone(),
+    toPos: new THREE.Vector3(0, newCamDist * 0.1, newCamDist),
+    fromTarget: new THREE.Vector3(0, 0, 0),
+    toTarget: new THREE.Vector3(0, 0, 0),
+    startTime: Date.now(), duration: dur,
+    onDone: null
+  };
+
+  newPm.group.position.set(0, 0, 0);
+  newPm.group.scale.setScalar(0.01);
   function switchAnim() {
     const t = Math.min((Date.now()-st)/dur, 1);
     const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
@@ -975,14 +986,16 @@ function switchFocused(newIdx) {
     if (t < 1) requestAnimationFrame(switchAnim);
     else {
       oldPm.group.scale.setScalar(PLANETS[focusedIdx].size);
-      oldPm.group.position.set(planetMeshes[focusedIdx].lastOrbitPos?.x||0, 0, planetMeshes[focusedIdx].lastOrbitPos?.z||0);
+      oldPm.group.position.set(0, 0, 0);
       focusedIdx = newIdx;
       newPm.group.position.set(0, 0, 0);
+      newPm.group.scale.setScalar(newTargetScale);
+      camera.position.set(0, newCamDist * 0.1, newCamDist);
+      camAnim = null;
       fadePlanet(newPm, 1);
       document.getElementById('pname').textContent = PLANETS[newIdx].name;
       document.getElementById('psub').textContent = PLANETS[newIdx].tab;
       updateDots(newIdx);
-      // Update focused decoratives for new planet
       focusGlowMesh.material.color.setHex(PLANETS[newIdx].atmHex);
       focusGlowMesh.scale.setScalar(newTargetScale);
       focusRingMesh.material.color.setHex(PLANETS[newIdx].atmHex);
@@ -990,8 +1003,6 @@ function switchFocused(newIdx) {
       switching = false;
     }
   }
-  newPm.group.position.set(0, 0, 0);
-  newPm.group.scale.setScalar(0.01);
   switchAnim();
 }
 
