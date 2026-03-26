@@ -1131,12 +1131,13 @@ canvas.addEventListener('touchmove', e => {
 canvas.addEventListener('touchend', e => {
   isDragging=false;
   const dx = e.changedTouches[0].clientX - tStartX;
+  const absDx = Math.abs(dx);
   if (MODE==='focused') {
     focusedAutoTimer = setTimeout(() => { focusedAutoRot=true; }, 3500);
-    if (Math.abs(dx)>50) { if(dx<0) switchFocused((focusedIdx+1)%PLANETS.length); else switchFocused((focusedIdx-1+PLANETS.length)%PLANETS.length); }
-    else if (dragDist<10) openPage(focusedIdx);
+    if (absDx>50) { if(dx<0) switchFocused((focusedIdx+1)%PLANETS.length); else switchFocused((focusedIdx-1+PLANETS.length)%PLANETS.length); }
+    else if (dragDist<12 && absDx<14) openPage(focusedIdx);
   }
-  if (MODE==='solar' && dragDist<10) {
+  if (MODE==='solar' && dragDist<12 && absDx<14) {
     const touch = e.changedTouches[0];
     const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
     if (idx >= 0) zoomToPlanet(idx);
