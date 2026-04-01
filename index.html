@@ -45,6 +45,25 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 #back-btn.visible{opacity:1}
 #back-btn:hover{background:rgba(255,255,255,0.06);border-color:var(--glass-bs);color:var(--text)}
 
+/* ── Music button ── */
+#music-btn{
+  position:fixed;top:20px;right:20px;z-index:30;
+  background:var(--glass);border:1px solid var(--glass-b);
+  color:var(--text-dim);
+  font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:500;
+  letter-spacing:3.5px;text-transform:uppercase;
+  padding:10px 18px;cursor:pointer;pointer-events:all;
+  transition:all 0.3s;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+#music-btn:hover{
+  background:rgba(255,255,255,0.06);border-color:var(--glass-bs);color:var(--text);
+}
+#music-btn.is-playing{
+  color:#9fe7ff;border-color:rgba(0,200,255,0.35);
+  box-shadow:0 0 18px rgba(0,200,255,0.12);
+}
+
 /* ── Planet label ── */
 #planet-label{
   position:fixed;top:36px;left:50%;transform:translateX(-50%);
@@ -431,10 +450,14 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 <body>
 <canvas id="c"></canvas>
 <div id="hud"></div>
+<audio id="bg-music" preload="auto" loop>
+  <source src="Timber.mp3" type="audio/mpeg">
+</audio>
 <div id="solar-hint">drag to orbit &nbsp;·&nbsp; wasd to pan &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click planet to explore</div>
 <div id="planet-labels"></div>
 <button id="reset-view-btn">&#8982;&nbsp;&nbsp;reset view</button>
 <button id="back-btn">&#8592;&nbsp;&nbsp;solar system</button>
+<button id="music-btn" aria-pressed="false">play music</button>
 <div id="planet-label"><h1 id="pname"></h1><p id="psub"></p></div>
 <div id="click-hint">drag to spin &nbsp;·&nbsp; click to land</div>
 <div id="nav-dots"></div>
@@ -590,6 +613,7 @@ let focusedRotVel = 0, focusedAutoRot = true, focusedAutoTimer = null;
 let dragDist = 0;
 let switching = false;
 let lastMY = 0;
+let focusedAnchor = new THREE.Vector3();
 
 // Default "beautiful" view — system fully visible, slight elevation, gentle angle
 const DEFAULT_VIEW = { radius: 92, azimuth: 0, elevation: 0.30, tx: 0, ty: 0, tz: 0 };
@@ -624,9 +648,49 @@ let orbitLines = [];
 let clock = 0;
 
 // Camera animation state
-let camAnim = null; // {fromPos, toPos, fromTarget, toTarget, startTime, duration, onDone}
+let camAnim = null; // {fromPos, toPos, fromTarget, toTarget, startTime, duration, onUpdate, onDone}
 const _camLookTarget = new THREE.Vector3();
 const _origin = new THREE.Vector3();
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, v));
+}
+
+function setMaterialFade(material, fade) {
+  if (!material) return;
+  if (material.userData.baseOpacity === undefined) {
+    material.userData.baseOpacity = material.opacity !== undefined ? material.opacity : 1;
+    material.userData.baseTransparent = !!material.transparent;
+  }
+  const alpha = material.userData.baseOpacity * fade;
+  material.transparent = fade < 0.999 || material.userData.baseTransparent;
+  material.opacity = alpha;
+  if (fade >= 0.999) {
+    material.transparent = material.userData.baseTransparent;
+    material.opacity = material.userData.baseOpacity;
+  }
+  material.needsUpdate = true;
+}
+
+function setObjectFade(obj, fade) {
+  obj.traverse(child => {
+    if (!child.material) return;
+    if (Array.isArray(child.material)) {
+      child.material.forEach(mat => setMaterialFade(mat, fade));
+      return;
+    }
+    setMaterialFade(child.material, fade);
+  });
+}
+
+function setPlanetFade(pm, fade) {
+  if (!pm) return;
+  setObjectFade(pm.group, fade);
+}
 
 function initThree() {
   const canvas = document.getElementById('c');
@@ -1056,7 +1120,7 @@ function animate() {
     sunCoreMesh.rotation.y -= 0.002;
   }
 
-  if (MODE === 'solar' || MODE === 'zooming-out') {
+  if (MODE === 'solar') {
     // Orbit all planets
     planetMeshes.forEach((pm, i) => {
       pm.angle += PLANETS[i].orbitSpeed * 0.004;
@@ -1118,12 +1182,16 @@ function animate() {
       if (focusedAutoRot) pm.group.rotation.y += 0.0025;
       pm.group.rotation.y += focusedRotVel;
       focusedRotVel *= 0.94;
-      pm.group.position.y = Math.sin(clock) * 0.06;
+      pm.group.position.set(
+        focusedAnchor.x,
+        focusedAnchor.y + Math.sin(clock) * 0.06,
+        focusedAnchor.z
+      );
       // Animate focused decoratives
       focusGlowMesh.material.opacity = 0.055 + Math.sin(clock * 1.8) * 0.025;
-      focusGlowMesh.position.y = pm.group.position.y;
+      focusGlowMesh.position.copy(pm.group.position);
       focusRingMesh.rotation.y += 0.003;
-      focusRingMesh.position.y = pm.group.position.y;
+      focusRingMesh.position.copy(pm.group.position);
       // Moon orbit
       pm.moons.forEach(c => {
         c.userData.oa += c.userData.os * 0.006;
@@ -1151,6 +1219,7 @@ function animate() {
     }
     _camLookTarget.lerpVectors(camAnim.fromTarget, camAnim.toTarget, e);
     camera.lookAt(_camLookTarget);
+    if (camAnim.onUpdate) camAnim.onUpdate(e, t);
     if (t >= 1) {
       camera.position.copy(camAnim.toPos);
       camera.lookAt(camAnim.toTarget);
@@ -1188,45 +1257,13 @@ function zoomToPlanet(idx) {
   const targetScale = 1.0 / scale;
   const camDist = (1.0 / PLANETS[idx].size) * 4.0;
   const transitionDur = 1100;
-
-  // Animate planet: scale up + slide to origin over full duration
   const startScale = pm.group.scale.x;
   const startPos = pm.group.position.clone();
-  const startTime = Date.now();
-  function scaleStep() {
-    const t = Math.min((Date.now()-startTime)/transitionDur, 1);
-    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
-    pm.group.scale.setScalar(startScale + (targetScale - startScale)*e);
-    pm.group.position.lerpVectors(startPos, _origin, e);
-    if (t < 1) requestAnimationFrame(scaleStep);
-  }
-  scaleStep();
-
-  // Gradually fade out solar system elements after 35% of transition
-  const fadeDelay = transitionDur * 0.35;
-  const fadeDur = transitionDur * 0.55;
-  setTimeout(() => {
-    // Fade orbit lines
-    orbitLines.forEach(l => {
-      const op0 = l.material.opacity;
-      const st = Date.now();
-      (function fo(){ const t=Math.min((Date.now()-st)/fadeDur,1); l.material.opacity=op0*(1-t); if(t<1)requestAnimationFrame(fo); })();
-    });
-    // Fade other planets
-    planetMeshes.forEach((p2, j) => { if (j !== idx) fadePlanet(p2, 0); });
-    // Fade sun corona + meshes
-    const sunChildren = scene.children.filter(c => c.material && (c === sunMesh || c === sunCoreMesh));
-    sunChildren.forEach(c => { c.material.transparent = true; });
-    const st2 = Date.now();
-    (function fs(){ const t=Math.min((Date.now()-st2)/fadeDur,1);
-      sunChildren.forEach(c => { c.material.opacity = (1-t) * (c===sunMesh?0.65:1); });
-      if(t<1)requestAnimationFrame(fs);
-    })();
-  }, fadeDelay);
+  const targetPos = worldPos.clone();
 
   // Camera arcs toward planet via elevated bezier midpoint (avoids sun)
   const fromPos = camera.position.clone();
-  const toPos = new THREE.Vector3(0, camDist * 0.1, camDist);
+  const toPos = new THREE.Vector3(worldPos.x, worldPos.y + camDist * 0.1, worldPos.z + camDist);
   // Midpoint: between start and planet position, elevated above the scene
   const midPos = new THREE.Vector3(
     (fromPos.x + worldPos.x) * 0.5 + worldPos.x * 0.2,
@@ -1235,20 +1272,37 @@ function zoomToPlanet(idx) {
   );
   // LookAt tracks from planet's current position to origin (where planet ends up)
   const fromTarget = worldPos.clone();
-  const toTarget = new THREE.Vector3(0, 0, 0);
+  const toTarget = worldPos.clone();
 
   camAnim = {
     fromPos, toPos, midPos, fromTarget, toTarget,
     startTime: Date.now(), duration: transitionDur,
+    onUpdate: (e) => {
+      pm.group.scale.setScalar(lerp(startScale, targetScale, e));
+      pm.group.position.lerpVectors(startPos, targetPos, e);
+
+      const fade = 1 - clamp01((e - 0.22) / 0.58);
+      orbitLines.forEach(line => setMaterialFade(line.material, fade));
+      planetMeshes.forEach((otherPm, j) => {
+        if (j !== idx) setPlanetFade(otherPm, fade);
+      });
+      setObjectFade(sunMesh, fade);
+      setObjectFade(sunCoreMesh, fade);
+    },
     onDone: () => {
-      pm.group.position.set(0, 0, 0);
+      focusedAnchor.copy(targetPos);
+      pm.group.position.copy(focusedAnchor);
       pm.group.scale.setScalar(targetScale);
-      camera.position.set(0, camDist * 0.1, camDist);
+      camera.position.copy(toPos);
+      camera.lookAt(focusedAnchor);
       // Ensure solar elements are fully hidden
       sunMesh.visible = false; sunCoreMesh.visible = false;
-      sunMesh.material.opacity = 0.65; sunMesh.material.transparent = true;
-      sunCoreMesh.material.opacity = 1; sunCoreMesh.material.transparent = false;
-      orbitLines.forEach(l => { l.material.opacity = 0; });
+      setObjectFade(sunMesh, 1);
+      setObjectFade(sunCoreMesh, 1);
+      orbitLines.forEach(line => setMaterialFade(line.material, 0));
+      planetMeshes.forEach((otherPm, j) => {
+        if (j !== idx) setPlanetFade(otherPm, 0);
+      });
       // Switch lighting to focused mode
       sunLight.visible = false;
       sunLight2.visible = false;
@@ -1258,11 +1312,13 @@ function zoomToPlanet(idx) {
       const pData = PLANETS[idx];
       focusGlowMesh.material.color.setHex(pData.atmHex);
       focusGlowMesh.scale.setScalar(targetScale);
+      focusGlowMesh.position.copy(focusedAnchor);
       focusGlowMesh.visible = true;
       focusRingMesh.material.color.setHex(pData.atmHex);
       focusRingMesh.material.opacity = 0.45;
       focusRingMesh.scale.setScalar(targetScale);
       focusRingMesh.rotation.set(0.35, 0, 0.2);
+      focusRingMesh.position.copy(focusedAnchor);
       focusRingMesh.visible = true;
       MODE = 'focused';
       showFocusedUI(idx);
@@ -1271,25 +1327,31 @@ function zoomToPlanet(idx) {
 }
 
 function fadePlanet(pm, targetOpacity) {
-  const children = pm.group.children.filter(c => c.material);
-  if (!children.length) return;
-  const starts = children.map(c => c.material.opacity !== undefined ? c.material.opacity : 1);
-  const wasTransparent = children.map(c => c.material.transparent);
-  children.forEach(c => { c.material.transparent = true; });
+  const materials = [];
+  pm.group.traverse(child => {
+    if (!child.material) return;
+    if (Array.isArray(child.material)) {
+      child.material.forEach(mat => materials.push(mat));
+      return;
+    }
+    materials.push(child.material);
+  });
+  if (!materials.length) return;
+  materials.forEach(mat => {
+    if (mat.userData.baseOpacity === undefined) {
+      mat.userData.baseOpacity = mat.opacity !== undefined ? mat.opacity : 1;
+      mat.userData.baseTransparent = !!mat.transparent;
+    }
+  });
+  const starts = materials.map(mat => {
+    const base = mat.userData.baseOpacity || 1;
+    return base === 0 ? 1 : mat.opacity / base;
+  });
   const startT = Date.now();
   function step() {
     const t = Math.min((Date.now() - startT) / 500, 1);
-    children.forEach((c, i) => { c.material.opacity = starts[i] + (targetOpacity - starts[i]) * t; });
-    if (t < 1) {
-      requestAnimationFrame(step);
-    } else if (targetOpacity >= 1) {
-      // Restore original transparent flags so opaque materials render correctly
-      children.forEach((c, i) => {
-        c.material.transparent = wasTransparent[i];
-        c.material.opacity = 1;
-        c.material.needsUpdate = true;
-      });
-    }
+    materials.forEach((mat, i) => setMaterialFade(mat, lerp(starts[i], targetOpacity, t)));
+    if (t < 1) requestAnimationFrame(step);
   }
   step();
 }
@@ -1314,26 +1376,48 @@ function zoomBackToSolar() {
     _s.target.z + _s.radius * Math.cos(_s.elevation) * Math.cos(_s.azimuth)
   );
   const toTarget = _s.target.clone();
-  const fromTarget = new THREE.Vector3(0, 0, 0);
+  const fromTarget = pm.group.position.clone();
+  const returnPos = new THREE.Vector3(
+    Math.cos(pm.angle) * pData.orbitRadius,
+    0,
+    Math.sin(pm.angle) * pData.orbitRadius
+  );
 
   // Reset planet scale and position during zoom
   const targetScale = pData.size;
   const currentScale = pm.group.scale.x;
-  const startTime = Date.now();
+  const currentPos = pm.group.position.clone();
   const dur = 900;
-  function scaleBack() {
-    const t = Math.min((Date.now()-startTime)/dur, 1);
-    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
-    pm.group.scale.setScalar(currentScale + (targetScale - currentScale)*e);
-    if (t < 1) requestAnimationFrame(scaleBack);
-  }
-  scaleBack();
 
   camAnim = {
     fromPos, toPos, fromTarget, toTarget,
     startTime: Date.now(), duration: 900,
+    onUpdate: (e) => {
+      pm.group.scale.setScalar(lerp(currentScale, targetScale, e));
+      pm.group.position.lerpVectors(currentPos, returnPos, e);
+
+      const fade = clamp01((e - 0.1) / 0.6);
+      orbitLines.forEach(line => setMaterialFade(line.material, fade));
+      planetMeshes.forEach((otherPm, j) => {
+        if (j !== focusedIdx) setPlanetFade(otherPm, fade);
+      });
+      sunMesh.visible = true;
+      sunCoreMesh.visible = true;
+      setObjectFade(sunMesh, fade);
+      setObjectFade(sunCoreMesh, fade);
+    },
     onDone: () => {
       if (savedOrbitState) { orbitState.target.copy(_s.target); orbitState.radius=_s.radius; orbitState.azimuth=_s.azimuth; orbitState.elevation=_s.elevation; }
+      planetMeshes.forEach((p2, i) => {
+        p2.group.scale.setScalar(PLANETS[i].size);
+        p2.group.position.set(
+          Math.cos(p2.angle) * PLANETS[i].orbitRadius,
+          0,
+          Math.sin(p2.angle) * PLANETS[i].orbitRadius
+        );
+        setPlanetFade(p2, 1);
+      });
+      focusedAnchor.set(0, 0, 0);
       focusedIdx = -1;
       MODE = 'solar';
       // Restore solar lighting
@@ -1342,11 +1426,11 @@ function zoomBackToSolar() {
       focusedKeyLight.visible = false;
       focusedFillLight.visible = false;
       // Show everything again
-      orbitLines.forEach(l => { l.material.opacity = 0.12; });
-      planetMeshes.forEach(p2 => fadePlanet(p2, 1));
+      orbitLines.forEach(line => setMaterialFade(line.material, 1));
       sunMesh.visible = true; sunCoreMesh.visible = true;
-      sunMesh.material.opacity = 0.65; sunMesh.material.transparent = true;
-      sunCoreMesh.material.opacity = 1; sunCoreMesh.material.transparent = false;
+      setObjectFade(sunMesh, 1);
+      setObjectFade(sunCoreMesh, 1);
+      updateOrbitCam();
       document.getElementById('solar-hint').style.opacity = '1';
     }
   };
@@ -1402,51 +1486,78 @@ function switchFocused(newIdx) {
   const oldPm = planetMeshes[focusedIdx];
   const newPm = planetMeshes[newIdx];
   const pData = PLANETS[newIdx];
-
-  fadePlanet(oldPm, 0);
-  const oldScale = oldPm.group.scale.x;
+  const oldIdx = focusedIdx;
+  const oldAnchor = focusedAnchor.clone();
   const newTargetScale = 1.0 / pData.size;
   const newCamDist = (1.0 / pData.size) * 4.0;
-  const st = Date.now(), dur = 700;
+  const dur = 800;
+  const newAnchor = new THREE.Vector3(
+    Math.cos(newPm.angle) * pData.orbitRadius,
+    0,
+    Math.sin(newPm.angle) * pData.orbitRadius
+  );
+  const fromPos = camera.position.clone();
+  const toPos = new THREE.Vector3(newAnchor.x, newAnchor.y + newCamDist * 0.1, newAnchor.z + newCamDist);
+  const fromTarget = oldAnchor.clone();
+  const toTarget = newAnchor.clone();
+  const incomingStartScale = newTargetScale * 0.72;
 
-  // Move camera to the correct distance for the new planet
+  setPlanetFade(newPm, 1);
+  newPm.group.position.copy(newAnchor);
+  newPm.group.scale.setScalar(incomingStartScale);
+
   camAnim = {
-    fromPos: camera.position.clone(),
-    toPos: new THREE.Vector3(0, newCamDist * 0.1, newCamDist),
-    fromTarget: new THREE.Vector3(0, 0, 0),
-    toTarget: new THREE.Vector3(0, 0, 0),
-    startTime: Date.now(), duration: dur,
-    onDone: null
-  };
+    fromPos,
+    toPos,
+    fromTarget,
+    toTarget,
+    startTime: Date.now(),
+    duration: dur,
+    onUpdate: (e) => {
+      oldPm.group.position.set(
+        oldAnchor.x,
+        oldAnchor.y + Math.sin(clock) * 0.06 * (1 - e),
+        oldAnchor.z
+      );
+      newPm.group.position.set(
+        newAnchor.x,
+        newAnchor.y + Math.sin(clock + 0.6) * 0.06 * e,
+        newAnchor.z
+      );
+      oldPm.group.scale.setScalar(lerp(1.0 / PLANETS[oldIdx].size, 0.82 * (1.0 / PLANETS[oldIdx].size), e));
+      newPm.group.scale.setScalar(lerp(incomingStartScale, newTargetScale, e));
+      setPlanetFade(oldPm, 1 - e);
+      setPlanetFade(newPm, Math.min(1, 0.2 + e));
+    },
+    onDone: () => {
+      setPlanetFade(oldPm, 0);
+      oldPm.group.scale.setScalar(PLANETS[oldIdx].size);
+      oldPm.group.position.set(
+        Math.cos(oldPm.angle) * PLANETS[oldIdx].orbitRadius,
+        0,
+        Math.sin(oldPm.angle) * PLANETS[oldIdx].orbitRadius
+      );
 
-  newPm.group.position.set(0, 0, 0);
-  newPm.group.scale.setScalar(0.01);
-  function switchAnim() {
-    const t = Math.min((Date.now()-st)/dur, 1);
-    const e = t<0.5?4*t*t*t:(t-1)*(2*t-2)*(2*t-2)+1;
-    oldPm.group.scale.setScalar(oldScale * (1-e));
-    newPm.group.scale.setScalar(newTargetScale * e);
-    if (t < 1) requestAnimationFrame(switchAnim);
-    else {
-      oldPm.group.scale.setScalar(PLANETS[focusedIdx].size);
-      oldPm.group.position.set(0, 0, 0);
       focusedIdx = newIdx;
-      newPm.group.position.set(0, 0, 0);
+      focusedAnchor.copy(newAnchor);
+      newPm.group.position.copy(focusedAnchor);
       newPm.group.scale.setScalar(newTargetScale);
-      camera.position.set(0, newCamDist * 0.1, newCamDist);
-      camAnim = null;
-      fadePlanet(newPm, 1);
+      setPlanetFade(newPm, 1);
+      camera.position.copy(toPos);
+      camera.lookAt(focusedAnchor);
+
       document.getElementById('pname').textContent = PLANETS[newIdx].name;
       document.getElementById('psub').textContent = PLANETS[newIdx].tab;
       updateDots(newIdx);
       focusGlowMesh.material.color.setHex(PLANETS[newIdx].atmHex);
       focusGlowMesh.scale.setScalar(newTargetScale);
+      focusGlowMesh.position.copy(focusedAnchor);
       focusRingMesh.material.color.setHex(PLANETS[newIdx].atmHex);
       focusRingMesh.scale.setScalar(newTargetScale);
+      focusRingMesh.position.copy(focusedAnchor);
       switching = false;
     }
-  }
-  switchAnim();
+  };
 }
 
 function openPage(idx) {
@@ -1667,10 +1778,10 @@ canvas.addEventListener('wheel', e => {
       // Mouse wheel → zoom
       orbitState.radius = Math.max(orbitState.minRadius, Math.min(orbitState.maxRadius, orbitState.radius + e.deltaY * 0.15));
     } else {
-      // Trackpad two-finger swipe → pan
+      // Trackpad two-finger swipe → pan (inverted)
       const panScale = orbitState.radius * 0.004;
-      orbitState.target.x += (fwdX * e.deltaY + rgtX * e.deltaX) * panScale;
-      orbitState.target.z += (fwdZ * e.deltaY + rgtZ * e.deltaX) * panScale;
+      orbitState.target.x -= (fwdX * e.deltaY + rgtX * e.deltaX) * panScale;
+      orbitState.target.z -= (fwdZ * e.deltaY + rgtZ * e.deltaX) * panScale;
     }
   }
 }, {passive:false});
@@ -1683,6 +1794,34 @@ document.getElementById('page-close').addEventListener('click', () => {
   document.getElementById('page-overlay').classList.remove('open');
   document.getElementById('page-bg').classList.remove('blog-stars');
 });
+
+const music = document.getElementById('bg-music');
+const musicBtn = document.getElementById('music-btn');
+
+function updateMusicButton(isPlaying) {
+  musicBtn.textContent = isPlaying ? 'pause music' : 'play music';
+  musicBtn.classList.toggle('is-playing', isPlaying);
+  musicBtn.setAttribute('aria-pressed', String(isPlaying));
+}
+
+musicBtn.addEventListener('click', async () => {
+  if (music.paused) {
+    try {
+      await music.play();
+      updateMusicButton(true);
+    } catch (err) {
+      console.error('Music playback failed:', err);
+      updateMusicButton(false);
+    }
+  } else {
+    music.pause();
+    updateMusicButton(false);
+  }
+});
+
+music.addEventListener('play', () => updateMusicButton(true));
+music.addEventListener('pause', () => updateMusicButton(false));
+updateMusicButton(false);
 
 // Touch
 let tStartX = 0;
