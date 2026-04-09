@@ -191,6 +191,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 #page-overlay{
   position:fixed;inset:0;z-index:40;
   opacity:0;pointer-events:none;transition:opacity 0.5s;overflow:hidden;
+  overscroll-behavior:contain;
 }
 #page-overlay.open{opacity:1;pointer-events:all}
 #page-bg{position:absolute;inset:0}
@@ -213,9 +214,10 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 
 #page-inner{
   position:relative;z-index:5;height:100%;
-  overflow-y:auto;scrollbar-width:none;
+  overflow-y:auto;overflow-x:hidden;scrollbar-width:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:80px 32px 60px;
+  -webkit-overflow-scrolling:touch;
 }
 #page-inner::-webkit-scrollbar{display:none}
 
@@ -336,6 +338,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   max-width:1160px;
   margin:0 auto;
   color:#fff2c4;
+  overflow-x:hidden;
 }
 /* -- Home page: pixel space terminal -- */
 @keyframes blink-cursor{0%,100%{opacity:1}50%{opacity:0}}
@@ -349,6 +352,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   color:#c8f0c0;
   font-family:'Fira Code',monospace;
   animation:flicker 8s infinite;
+  overflow-x:hidden;
 }
 .home-hero{
   position:relative;
@@ -856,6 +860,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   max-width:1160px;
   margin:0 auto;
   color:#deeeff;
+  overflow-x:hidden;
 }
 .skills-hero{
   position:relative;
@@ -1436,6 +1441,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   max-width:1180px;
   margin:0 auto;
   color:#efe7ff;
+  overflow-x:hidden;
 }
 .projects-hero{
   position:relative;
@@ -1858,17 +1864,349 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   color:inherit;
     grid-template-columns:1fr;
   }
+  .featured-jump-copy{
+    min-width:0;
+  }
+  .contact-method-value,
+  .contact-quick-value{
+    overflow-wrap:anywhere;
+  }
+  .showcase-grid{
+    grid-template-columns:1fr;
+  }
 }
 @media(max-width:760px){
-  .home-hero{
-    padding:20px 16px;
+  #overview-hint,
+  #solar-hint{
+    bottom:calc(88px + env(safe-area-inset-bottom, 0px));
+    width:min(92vw, 520px);
+    white-space:normal;
+    text-align:center;
+    line-height:1.55;
+    letter-spacing:2px;
+    font-size:8px;
+    padding:0 6px;
   }
+  #solar-nav{
+    left:10px;
+    right:10px;
+  }
+  .solar-nav-btn{
+    width:44px;
+    height:44px;
+    font-size:18px;
+    min-width:44px;
+    min-height:44px;
+  }
+  #back-btn,
+  #music-btn,
+  #page-close{
+    top:calc(12px + env(safe-area-inset-top, 0px));
+    font-size:8px;
+    letter-spacing:2px;
+    padding:10px 14px;
+    max-width:calc(50vw - 16px);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    min-height:40px;
+  }
+  #back-btn,
+  #page-close{left:12px}
+  #music-btn{right:12px}
+  #planet-label{
+    top:calc(58px + env(safe-area-inset-top, 0px));
+    width:calc(100% - 40px);
+  }
+  #planet-label h1{
+    font-size:15px;
+    letter-spacing:4px;
+    line-height:1.2;
+  }
+  #planet-label p{
+    font-size:7px;
+    letter-spacing:2.2px;
+    margin-top:7px;
+  }
+  #nav-dots{
+    bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+    gap:6px;
+  }
+  .dot{
+    width:20px;
+    height:4px;
+    min-height:4px;
+  }
+  .dot.active{
+    width:32px;
+  }
+  #reset-view-btn{
+    right:12px;
+    bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+    font-size:7.5px;
+    letter-spacing:2.2px;
+    padding:10px 14px;
+    max-width:58vw;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    min-height:40px;
+  }
+  #guide-overlay{
+    width:min(80vw, 300px);
+    max-width:300px;
+  }
+  #guide-close{
+    padding:10px 10px 0;
+  }
+  #guide-close span{
+    font-size:8px;
+    letter-spacing:2px;
+    padding:9px 14px;
+    min-height:38px;
+    display:inline-flex;
+    align-items:center;
+  }
+  #guide-inner{
+    gap:18px;
+    padding:10px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+  #guide-astro img{
+    width:58px;
+  }
+  #guide-astro p{
+    font-size:7px;
+    letter-spacing:2px;
+  }
+  .guide-title{
+    font-size:14px;
+    letter-spacing:3px;
+  }
+  .guide-intro{
+    font-size:11px;
+    line-height:1.7;
+  }
+  .guide-planet-name{
+    font-size:8.5px;
+    letter-spacing:2px;
+  }
+  .guide-planet-desc{
+    font-size:8px;
+    letter-spacing:0.8px;
+  }
+  #astro-widget{
+    left:12px;
+    bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  #astro-widget.intro-center #astro-img{
+    width:120px;
+  }
+  #astro-img{
+    width:90px;
+  }
+  #astro-widget:hover #astro-img{
+    width:90px;
+  }
+  #astro-bubble{
+    bottom:94px;
+    left:0;
+    max-width:160px;
+    padding:8px 10px 8px 10px;
+  }
+  #astro-bubble p{
+    font-size:8px;
+    letter-spacing:1.1px;
+    line-height:1.6;
+  }
+  #intro-welcome-text{
+    margin-top:200px;
+    max-width:92vw;
+    font-size:10px;
+    letter-spacing:2.8px;
+    line-height:1.5;
+    padding:10px 14px;
+  }
+  .map-label{
+    font-size:7px;
+    letter-spacing:2px;
+  }
+  #sun-bubble{
+    max-width:122px;
+    padding:8px 10px;
+  }
+  #sun-bubble p{
+    font-size:8px;
+    letter-spacing:1.2px;
+    line-height:1.6;
+  }
+  #page-inner{
+    padding:60px 14px calc(40px + env(safe-area-inset-bottom, 0px));
+    justify-content:flex-start;
+  }
+  .pg-content{
+    max-width:100%;
+  }
+  .pg-eyebrow{
+    font-size:7px;
+    letter-spacing:3px;
+    margin-bottom:14px;
+  }
+  .pg-title{
+    font-size:clamp(24px, 9vw, 36px);
+    letter-spacing:1px;
+    line-height:1.1;
+    margin-bottom:12px;
+  }
+  .pg-tab{
+    font-size:7px;
+    letter-spacing:2.8px;
+    padding:6px 10px;
+    margin-bottom:20px;
+  }
+  .pg-divider{
+    margin-bottom:20px;
+  }
+  .pg-intro{
+    font-size:14px;
+    line-height:1.55;
+    margin-bottom:16px;
+  }
+  .pg-body{
+    font-size:13px;
+    line-height:1.74;
+    margin-bottom:22px;
+  }
+  .pg-tags{
+    gap:6px;
+  }
+  .pg-tag{
+    font-size:7px;
+    letter-spacing:1.2px;
+    padding:6px 10px;
+  }
+  .blog-reader{
+    gap:14px;
+  }
+  .blog-card{
+    padding:16px 14px;
+    max-height:none;
+    border-radius:12px;
+  }
+  .blog-card-title{
+    font-size:13px;
+  }
+  .blog-card-date{
+    font-size:9px;
+  }
+  .blog-card-body{
+    font-size:11px;
+    line-height:1.65;
+  }
+  /* Home page terminal */
+  .home-hero{
+    padding:18px 14px;
+  }
+  .home-hero-grid{
+    gap:18px;
+  }
+  .home-kicker{
+    font-size:7px;
+    letter-spacing:1.5px;
+  }
+  .home-title{
+    font-size:clamp(10px, 3.5vw, 14px);
+    line-height:2;
+  }
+  .home-summary{
+    font-size:11px;
+    line-height:1.8;
+    padding-left:10px;
+  }
+  .home-signal-card{
+    padding:16px;
+  }
+  .signal-title{
+    font-size:9px;
+    line-height:2;
+  }
+  .signal-copy{
+    font-size:11px;
+    line-height:1.8;
+  }
+  .signal-stat{
+    font-size:10px;
+    flex-direction:column;
+    gap:4px;
+  }
+  .signal-stat strong{
+    font-size:9px;
+  }
+  .home-section-head{
+    flex-direction:column;
+    align-items:flex-start;
+    padding-bottom:10px;
+  }
+  .home-section-label{
+    font-size:6px;
+    letter-spacing:1.5px;
+  }
+  .home-section-title{
+    font-size:14px;
+    line-height:1.4;
+  }
+  .home-section-note{
+    text-align:left;
+    font-size:10px;
+    line-height:1.7;
+    max-width:none;
+  }
+  .home-grid{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+  .home-card{
+    min-height:auto;
+    padding:16px;
+  }
+  .home-card-title{
+    font-size:13px;
+    line-height:1.5;
+  }
+  .home-card-copy{
+    font-size:10px;
+    line-height:1.8;
+  }
+  .home-chip-row span{
+    font-size:8px;
+    padding:4px 8px;
+  }
+  .home-pill{
+    font-size:8px;
+    letter-spacing:0.8px;
+    padding:5px 10px;
+  }
+  .home-primary,
+  .home-secondary{
+    width:100%;
+    justify-content:center;
+    min-height:42px;
+    font-size:7px;
+    letter-spacing:0.8px;
+    padding:10px 14px;
+  }
+  .home-cta-row{
+    width:100%;
+    gap:10px;
+  }
+  .home-sections{
+    gap:18px;
+  }
+  /* Skills page */
   .skills-hero,
   .contact-hero{
-    padding:22px 20px 20px;
-    border-radius:24px;
+    padding:20px 16px 18px;
+    border-radius:22px;
   }
-  .home-section-head,
   .skills-section-head,
   .contact-section-head{
     flex-direction:column;
@@ -1877,47 +2215,547 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   .contact-method-grid{
     grid-template-columns:1fr;
   }
-  .home-card{
-    min-height:auto;
-    padding:16px;
-  }
   .skills-card,
   .contact-method{
     min-height:auto;
-    padding:18px;
+    padding:16px;
   }
   .skills-track-item{
     grid-template-columns:1fr;
-    gap:10px;
+    gap:8px;
   }
+  /* Projects page */
   .projects-hero{
-    padding:22px 20px 20px;
-    border-radius:24px;
+    padding:20px 16px 18px;
+    border-radius:22px;
   }
   .projects-section-header{
     flex-direction:column;
     align-items:flex-start;
   }
-  .showcase-grid{
-    grid-template-columns:1fr;
-  }
   .showcase-card{
     min-height:auto;
-    padding:18px;
+    padding:16px;
   }
   .showcase-head{
     flex-direction:column;
     align-items:flex-start;
+    gap:10px;
   }
   .logo-mark{
-    min-width:52px;
-    height:52px;
+    min-width:48px;
+    height:48px;
+    border-radius:14px;
+    font-size:14px;
+  }
+  .logo-lockup{
+    gap:10px;
+  }
+  .logo-name{
+    font-size:17px;
+  }
+  .logo-role{
+    font-size:10px;
+    letter-spacing:1.2px;
+  }
+  .skills-title{
+    font-size:clamp(22px, 7vw, 32px);
+    line-height:1.08;
+  }
+  .projects-title,
+  .contact-title{
+    font-size:clamp(22px, 7vw, 32px);
+    line-height:1.08;
+  }
+  .skills-summary,
+  .projects-summary,
+  .contact-summary{
+    font-size:13px;
+    line-height:1.72;
+  }
+  .skills-pill,
+  .projects-pill,
+  .contact-pill{
+    font-size:8px;
+    letter-spacing:1.2px;
+    padding:6px 10px;
+  }
+  .contact-primary,
+  .contact-secondary{
+    width:100%;
+    justify-content:center;
+    min-height:44px;
+    letter-spacing:1.8px;
+  }
+  .contact-cta-row{
+    width:100%;
+    gap:10px;
+  }
+  .contact-method-link,
+  .project-link{
+    width:100%;
+    justify-content:center;
+    text-align:center;
+    white-space:normal;
+    line-height:1.4;
+  }
+  .featured-jump{
+    gap:12px;
+    border-radius:18px;
+    padding:16px;
+  }
+  .featured-title{
+    font-size:clamp(20px, 6vw, 28px);
+  }
+  .featured-body{
+    font-size:13px;
+    line-height:1.7;
+  }
+  .featured-cta{
+    width:100%;
+    justify-content:center;
+  }
+  .skills-focus-title{
+    font-size:18px;
+    line-height:1.12;
+  }
+  .skills-focus-copy,
+  .signal-body{
+    font-size:13px;
+    line-height:1.72;
+  }
+  .skills-section-title,
+  .projects-section-title,
+  .contact-section-title{
+    font-size:20px;
+    line-height:1.14;
+  }
+  .skills-track-title{
+    font-size:17px;
+    line-height:1.18;
+  }
+  .skills-track-copy,
+  .showcase-body,
+  .showcase-tagline,
+  .contact-method-copy{
+    font-size:13px;
+    line-height:1.72;
+  }
+  .skills-track-tags span,
+  .showcase-meta span,
+  .card-chip{
+    font-size:8px;
+    letter-spacing:1.4px;
+  }
+  .skills-shell{
     border-radius:16px;
+  }
+  .skills-shell-title{
+    font-size:10px;
+  }
+  .skills-shell-line,
+  .skills-shell-output span{
+    font-size:10px;
+    line-height:1.6;
+  }
+  .skills-shell-body{
+    padding:12px;
+    gap:10px;
+  }
+  .contact-method-title,
+  .contact-note-title{
+    font-size:18px;
+    line-height:1.18;
+  }
+  .contact-method-value,
+  .contact-quick-value{
+    font-size:13px;
+    line-height:1.6;
+  }
+  .contact-method-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    font-size:15px;
+  }
+  .signal-status{
+    font-size:22px;
+    line-height:1.1;
+  }
+  .signal-item{
+    flex-direction:column;
+    gap:4px;
+    font-size:12px;
+  }
+  .skills-focus-item{
+    flex-direction:column;
+    gap:4px;
+    font-size:12px;
+  }
+  .contact-quick-item{
+    padding:12px 14px;
+  }
+  .contact-quick-label{
+    font-size:9px;
+  }
+  .contact-quick-meta{
+    font-size:11px;
+  }
+  .contact-note-body,
+  .contact-time-list{
+    font-size:13px;
+  }
+  .contact-note-card,
+  .contact-time-card,
+  .contact-quick-card{
+    padding:18px;
+    border-radius:20px;
+  }
+  .skills-focus-card{
+    padding:18px;
+    border-radius:20px;
+  }
+  .contact-signal-card{
+    padding:18px;
+    border-radius:20px;
+  }
+  .projects-featured{
+    margin-top:14px;
+  }
+  .projects-section{
+    margin-top:20px;
+  }
+  .skills-sections,
+  .contact-sections{
+    gap:18px;
   }
 }
 @media(max-width:640px){
-  #page-inner{padding:72px 20px 48px}
-  .pg-title{letter-spacing:1px}
+  #overview-hint,
+  #solar-hint{
+    bottom:calc(72px + env(safe-area-inset-bottom, 0px));
+    font-size:7px;
+    letter-spacing:1.2px;
+  }
+  #solar-nav{
+    left:8px;
+    right:8px;
+  }
+  .solar-nav-btn{
+    width:40px;
+    height:40px;
+    font-size:16px;
+  }
+  #back-btn,
+  #music-btn,
+  #page-close{
+    padding:9px 10px;
+    letter-spacing:1.5px;
+    max-width:44vw;
+    font-size:7px;
+  }
+  #planet-label{
+    top:calc(50px + env(safe-area-inset-top, 0px));
+  }
+  #planet-label h1{
+    font-size:12px;
+    letter-spacing:2.4px;
+  }
+  #planet-label p{
+    letter-spacing:1.4px;
+    font-size:6.5px;
+  }
+  #reset-view-btn{
+    max-width:64vw;
+    font-size:7px;
+    letter-spacing:1.5px;
+  }
+  #nav-dots{
+    bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  #intro-welcome-text{
+    margin-top:170px;
+    letter-spacing:1.8px;
+    font-size:9px;
+  }
+  .showcase-card,
+  .contact-method,
+  .contact-quick-card,
+  .contact-note-card,
+  .contact-time-card{
+    padding:14px;
+    border-radius:16px;
+  }
+  .skills-card{
+    border-radius:16px;
+    padding:14px;
+  }
+  #page-inner{
+    padding:56px 12px calc(36px + env(safe-area-inset-bottom, 0px));
+  }
+  .home-hero{
+    padding:14px 12px;
+  }
+  .home-title{
+    font-size:clamp(9px, 3.2vw, 12px);
+  }
+  .home-summary{
+    font-size:10px;
+    line-height:1.75;
+  }
+  .skills-hero,
+  .contact-hero,
+  .projects-hero{
+    padding:16px 14px 14px;
+    border-radius:18px;
+  }
+  .skills-title,
+  .projects-title,
+  .contact-title{
+    font-size:clamp(20px, 6.5vw, 28px);
+  }
+  .logo-mark{
+    min-width:44px;
+    height:44px;
+  }
+  .logo-name{
+    font-size:15px;
+  }
+  .featured-jump{
+    padding:14px;
+    border-radius:16px;
+  }
+  .skills-shell{
+    border-radius:14px;
+  }
+  .skills-shell-line,
+  .skills-shell-output span{
+    font-size:9.5px;
+  }
+  .skills-shell-body{
+    padding:10px;
+  }
+  .contact-method-title,
+  .contact-note-title{
+    font-size:16px;
+  }
+  .signal-status{
+    font-size:20px;
+  }
+  #astro-widget.intro-center #astro-img{
+    width:110px;
+  }
+  #astro-img{
+    width:80px;
+  }
+  #astro-widget:hover #astro-img{
+    width:80px;
+  }
+  #astro-bubble{
+    bottom:84px;
+    max-width:150px;
+  }
+}
+@media(max-width:520px){
+  #back-btn,
+  #music-btn,
+  #page-close{
+    font-size:7px;
+    padding:8px 10px;
+  }
+  #guide-overlay{
+    width:min(85vw, 280px);
+    max-width:280px;
+  }
+  #guide-close span{
+    letter-spacing:1.5px;
+    padding:7px 10px;
+  }
+  #guide-inner{
+    padding:8px 14px calc(24px + env(safe-area-inset-bottom, 0px));
+    gap:14px;
+  }
+  .guide-title{
+    font-size:13px;
+    letter-spacing:2.5px;
+  }
+  .guide-intro{
+    font-size:10px;
+    line-height:1.65;
+  }
+  .featured-title{
+    font-size:clamp(18px, 6vw, 24px);
+  }
+  .projects-pill-row,
+  .contact-pill-row,
+  .skills-pill-row,
+  .home-pill-row{
+    gap:6px;
+  }
+  .contact-method-type,
+  .contact-method-link,
+  .project-link{
+    letter-spacing:2px;
+    font-size:9px;
+  }
+  #page-inner{
+    padding:52px 10px calc(32px + env(safe-area-inset-bottom, 0px));
+  }
+  .home-hero{
+    padding:12px 10px;
+  }
+  .home-kicker{
+    font-size:6px;
+    letter-spacing:1px;
+  }
+  .home-title{
+    font-size:clamp(8px, 2.8vw, 11px);
+  }
+  .home-summary{
+    font-size:9px;
+    line-height:1.7;
+    padding-left:8px;
+    border-left-width:1px;
+  }
+  .home-primary,
+  .home-secondary{
+    font-size:6px;
+    padding:8px 10px;
+    min-height:38px;
+  }
+  .signal-title{
+    font-size:8px;
+  }
+  .signal-copy{
+    font-size:10px;
+  }
+  .signal-stat{
+    font-size:9px;
+  }
+  .home-signal-card{
+    padding:14px;
+  }
+  .home-card{
+    padding:14px;
+  }
+  .home-card-title{
+    font-size:12px;
+  }
+  .home-card-copy{
+    font-size:9px;
+  }
+  .skills-hero,
+  .contact-hero,
+  .projects-hero{
+    padding:14px 12px 12px;
+    border-radius:16px;
+  }
+  .skills-title,
+  .projects-title,
+  .contact-title{
+    font-size:clamp(18px, 6vw, 24px);
+  }
+  .skills-summary,
+  .projects-summary,
+  .contact-summary{
+    font-size:12px;
+  }
+  .contact-signal-card,
+  .skills-focus-card{
+    padding:14px;
+    border-radius:16px;
+  }
+  .signal-status{
+    font-size:18px;
+  }
+  .skills-focus-title{
+    font-size:16px;
+  }
+  .skills-section-title,
+  .projects-section-title,
+  .contact-section-title{
+    font-size:18px;
+  }
+  .skills-track-title{
+    font-size:15px;
+  }
+  .contact-method-title,
+  .contact-note-title{
+    font-size:15px;
+  }
+  #astro-widget.intro-center #astro-img{
+    width:100px;
+  }
+  #astro-img{
+    width:72px;
+  }
+  #astro-widget:hover #astro-img{
+    width:72px;
+  }
+  #astro-bubble{
+    bottom:76px;
+    max-width:140px;
+  }
+  #astro-bubble p{
+    font-size:7px;
+  }
+}
+@media(max-width:380px){
+  #page-inner{
+    padding:48px 8px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+  .home-hero{
+    padding:10px 8px;
+  }
+  .home-title{
+    font-size:8px;
+    line-height:2.1;
+  }
+  .skills-hero,
+  .contact-hero,
+  .projects-hero{
+    padding:12px 10px 10px;
+    border-radius:14px;
+  }
+  .skills-title,
+  .projects-title,
+  .contact-title{
+    font-size:18px;
+  }
+  .featured-title{
+    font-size:16px;
+  }
+  .featured-jump{
+    padding:12px;
+  }
+  .logo-mark{
+    min-width:40px;
+    height:40px;
+    font-size:12px;
+  }
+  .logo-name{
+    font-size:14px;
+  }
+  .showcase-card,
+  .contact-method,
+  .skills-card{
+    padding:12px;
+    border-radius:14px;
+  }
+}
+@media(max-height:500px) and (max-width:900px){
+  #overview-hint,
+  #solar-hint{
+    opacity:0 !important;
+  }
+  #solar-nav{
+    top:50%;
+    bottom:auto;
+    transform:translateY(-50%);
+  }
+  #astro-widget{
+    bottom:8px;
+  }
 }
 /* â”€â”€ Astronaut widget â”€â”€ */
 @keyframes astro-wave{
@@ -2132,7 +2970,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 
 <!-- Guide overlay -->
 <div id="guide-overlay">
-  <button id="guide-close"><span>&#x2715;&nbsp;&nbsp;close</span></button>
+  <button id="guide-close"><span>&#8592;&nbsp;&nbsp;close</span></button>
   <div id="guide-inner">
     <div id="guide-astro">
       <img src="astronaut.png" alt="Dev as astronaut" />
@@ -2347,6 +3185,30 @@ let lastFocusedScrollAt = 0;
 const SOLAR_VIEW = { radius: 24, azimuth: -0.92, elevation: 0.34 };
 const SOLAR_TARGET_FOLLOW = 0.75;
 const SOLAR_CAM_PULL = 0.18;
+const MOBILE_BREAKPOINT = 760;
+let isMobileViewport = window.matchMedia(`(max-width:${MOBILE_BREAKPOINT}px)`).matches;
+const VIEW_PRESETS = {
+  desktop: {
+    solar: { behind: 5.0, up: 9.0, side: 13.0 },
+    focused: { position: [0, 0.16, 4.6], target: [0, 0, 0] },
+    overviewRadius: 135
+  },
+  mobile: {
+    solar: { behind: 7.0, up: 11.0, side: 15.0 },
+    focused: { position: [0, 0.2, 6.2], target: [0, 0, 0] },
+    overviewRadius: 140
+  }
+};
+const HINT_COPY = {
+  desktop: {
+    overview: 'drag to rotate · scroll to zoom · click a planet to select',
+    solar: 'scroll to choose a planet · drag to rotate · click once to select'
+  },
+  mobile: {
+    overview: 'drag to rotate · tap a planet to select',
+    solar: 'swipe to choose a planet · drag to rotate · tap once to focus'
+  }
+};
 const SOLAR_3RD_PERSON = { behind: 5.0, up: 9.0, side: 13.0 };
 const SOLAR_CAMERA_BASE = new THREE.Vector3(
   SOLAR_VIEW.radius * Math.cos(SOLAR_VIEW.elevation) * Math.sin(SOLAR_VIEW.azimuth),
@@ -2362,6 +3224,29 @@ const orbitState = {
   desiredTarget: new THREE.Vector3(),
 };
 let savedOrbitState = null;
+
+function applyHintCopy() {
+  const solarHintEl = document.getElementById('solar-hint');
+  const overviewHintEl = document.getElementById('overview-hint');
+  if (!solarHintEl || !overviewHintEl) return;
+  const copy = isMobileViewport ? HINT_COPY.mobile : HINT_COPY.desktop;
+  solarHintEl.textContent = copy.solar;
+  overviewHintEl.textContent = copy.overview;
+}
+
+function applyViewportTuning() {
+  isMobileViewport = window.matchMedia(`(max-width:${MOBILE_BREAKPOINT}px)`).matches;
+  const preset = isMobileViewport ? VIEW_PRESETS.mobile : VIEW_PRESETS.desktop;
+  SOLAR_3RD_PERSON.behind = preset.solar.behind;
+  SOLAR_3RD_PERSON.up = preset.solar.up;
+  SOLAR_3RD_PERSON.side = preset.solar.side;
+  FOCUSED_VIEW.position.set(...preset.focused.position);
+  FOCUSED_VIEW.target.set(...preset.focused.target);
+  if (MODE !== 'overview') {
+    overviewOrbit.radius = preset.overviewRadius;
+  }
+  applyHintCopy();
+}
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    THREE.JS SETUP
@@ -4149,13 +5034,23 @@ canvas.addEventListener('mouseup', e => {
 let sunPopupTimer = null;
 function showSunPopup() {
   const el = document.getElementById('sun-popup');
+  const bubble = document.getElementById('sun-bubble');
   // Project sun center to screen
   const sunPos = new THREE.Vector3(0,0,0);
   sunPos.project(camera);
   const sx = (sunPos.x * 0.5 + 0.5) * window.innerWidth;
   const sy = (-sunPos.y * 0.5 + 0.5) * window.innerHeight;
-  el.style.left = (sx + 40) + 'px';
-  el.style.top = (sy - 50) + 'px';
+  const bubbleRect = bubble ? bubble.getBoundingClientRect() : null;
+  const bubbleW = bubbleRect && bubbleRect.width ? bubbleRect.width : (isMobileViewport ? 126 : 140);
+  const bubbleH = bubbleRect && bubbleRect.height ? bubbleRect.height : (isMobileViewport ? 78 : 88);
+  const desiredX = sx + (isMobileViewport ? 18 : 40);
+  const desiredY = sy - (isMobileViewport ? bubbleH * 0.6 : 50);
+  const minPadX = 8;
+  const minPadY = 8 + (isMobileViewport ? 44 : 0);
+  const clampedX = Math.max(minPadX, Math.min(window.innerWidth - bubbleW - minPadX, desiredX));
+  const clampedY = Math.max(minPadY, Math.min(window.innerHeight - bubbleH - minPadX, desiredY));
+  el.style.left = clampedX + 'px';
+  el.style.top = clampedY + 'px';
   el.style.transform = 'translate(0,0) scale(0.92)';
   el.classList.remove('fade-out');
   el.classList.add('show');
@@ -4247,19 +5142,24 @@ canvas.addEventListener('touchstart', e => {
   if (MODE==='focused') { if (focusedAutoTimer) clearTimeout(focusedAutoTimer); focusedAutoRot=false; }
 }, {passive:true});
 canvas.addEventListener('touchmove', e => {
-  const dx = e.touches[0].clientX - lastMX;
-  dragDist += Math.abs(dx);
+  const touch = e.touches[0];
+  const dx = touch.clientX - lastMX;
+  const dy = touch.clientY - lastMY;
+  dragDist += Math.abs(dx) + Math.abs(dy);
   if (MODE==='focused' && planetMeshes[focusedIdx]) {
     planetMeshes[focusedIdx].group.rotation.y += dx*0.012;
     focusedRotVel = dx * 0.006;
   }
+  if (MODE==='solar') {
+    solarDragYaw += dx * 0.004;
+    solarDragPitch = Math.max(-0.5, Math.min(0.5, solarDragPitch - dy * 0.003));
+  }
   if (MODE==='overview') {
-    const dy = e.touches[0].clientY - lastMY;
     overviewOrbit.azimuth -= dx * 0.005;
     overviewOrbit.elevation = Math.max(0.1, Math.min(1.2, overviewOrbit.elevation + dy * 0.004));
   }
-  lastMX = e.touches[0].clientX;
-  lastMY = e.touches[0].clientY;
+  lastMX = touch.clientX;
+  lastMY = touch.clientY;
 }, {passive:true});
 canvas.addEventListener('touchend', e => {
   e.preventDefault(); // suppress synthetic mousedown/mouseup ghost events
@@ -4278,6 +5178,19 @@ canvas.addEventListener('touchend', e => {
       const touch = e.changedTouches[0];
       const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
       if (idx >= 0) handleSolarPlanetPress(idx);
+      else if (isHoveringSun({ clientX: touch.clientX, clientY: touch.clientY })) showSunPopup();
+    }
+  }
+  if (MODE==='overview') {
+    if (dragDist < 12 && absDx < 14) {
+      const touch = e.changedTouches[0];
+      const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
+      if (idx >= 0) {
+        closeGuideOverlay();
+        solarSelectedIdx = idx;
+        updateDots(idx);
+        exitOverview();
+      }
     }
   }
 });
@@ -4286,6 +5199,17 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  const wasMobile = isMobileViewport;
+  applyViewportTuning();
+  if (MODE === 'solar' && !camAnim) {
+    updateOrbitCam();
+  } else if (MODE === 'focused' && !camAnim && wasMobile !== isMobileViewport) {
+    camera.position.copy(FOCUSED_VIEW.position);
+    camera.lookAt(FOCUSED_VIEW.target);
+  } else if (MODE === 'overview' && !camAnim && wasMobile !== isMobileViewport) {
+    camera.position.copy(getOverviewCamPos());
+    camera.lookAt(orbitState.target);
+  }
 });
 
 window.addEventListener('keydown', e => {
@@ -4331,8 +5255,12 @@ function startIntro() {
   solarHint.style.opacity = '0';
   navDots.classList.remove('visible');
 
+  const introPreset = isMobileViewport
+    ? { radius: 68, height: 30, sweepDuration: 4100, turns: Math.PI * 1.95 }
+    : { radius: 85, height: 38, sweepDuration: 4500, turns: Math.PI * 2.15 };
+
   // Start camera at a wide overview position looking at the sun
-  camera.position.set(Math.cos(0.4) * 85, 38, Math.sin(0.4) * 85);
+  camera.position.set(Math.cos(0.4) * introPreset.radius, introPreset.height, Math.sin(0.4) * introPreset.radius);
   camera.lookAt(0, -3, 0);
 
   // Phase 1 (0-2.2s): Astro to center + welcome text
@@ -4346,12 +5274,12 @@ function startIntro() {
     astro.classList.add('intro-return');
 
     // Single continuous sweep: wide orbit with tilt ? zoom into planet 0
-    const sweepDur = 4500;
+    const sweepDur = introPreset.sweepDuration;
     const sweepStart = Date.now();
-    const orbitRadius = 85;
-    const orbitHeight = 38;
+    const orbitRadius = introPreset.radius;
+    const orbitHeight = introPreset.height;
     const startAngle = 0.4;      // start angle in radians
-    const totalRotation = Math.PI * 2.15; // just over one full rotation
+    const totalRotation = introPreset.turns; // just over one full rotation
 
     solarSelectedIdx = 0;
 
@@ -4419,6 +5347,7 @@ function startIntro() {
 
 buildNav();
 buildPlanetLabels();
+applyViewportTuning();
 initThree();
 animate();
 
