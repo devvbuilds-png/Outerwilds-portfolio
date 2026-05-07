@@ -2009,17 +2009,24 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
     margin-top:7px;
   }
   #nav-dots{
+    left:10px;
+    right:10px;
+    transform:none;
+    width:auto;
     bottom:calc(16px + env(safe-area-inset-bottom, 0px));
-    gap:6px;
-    padding:8px 10px;
+    gap:7px;
+    padding:9px 10px;
     border:1px solid rgba(0,200,255,0.16);
     background:rgba(0,8,18,0.42);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    justify-content:space-between;
   }
   .dot{
-    width:54px;
-    height:30px;
-    min-height:30px;
+    flex:1 1 0;
+    width:auto;
+    height:34px;
+    min-height:34px;
+    min-width:0;
     border:1px solid rgba(255,255,255,0.08);
     background:rgba(255,255,255,0.025);
     display:flex;
@@ -2030,19 +2037,20 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   .dot::after{
     content:attr(data-label);
     font-family:'Space Grotesk',sans-serif;
-    font-size:6px;
+    font-size:7px;
     font-weight:600;
-    letter-spacing:1.2px;
+    letter-spacing:1.4px;
     color:rgba(219,214,204,0.48);
     text-transform:uppercase;
     line-height:1;
-    max-width:46px;
+    max-width:100%;
     overflow:hidden;
     text-overflow:ellipsis;
     white-space:nowrap;
   }
   .dot.active{
-    width:64px;
+    flex:1.18 1 0;
+    width:auto;
     border-color:rgba(196,165,88,0.42);
     background:rgba(196,165,88,0.08);
   }
@@ -2604,20 +2612,25 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
     letter-spacing:1.5px;
   }
   #nav-dots{
+    left:8px;
+    right:8px;
+    transform:none;
     bottom:calc(12px + env(safe-area-inset-bottom, 0px));
-    gap:4px;
-    padding:7px 8px;
+    gap:5px;
+    padding:8px 8px;
   }
   .dot{
-    width:46px;
+    width:auto;
+    height:32px;
+    min-height:32px;
   }
   .dot.active{
-    width:56px;
+    width:auto;
   }
   .dot::after{
-    font-size:5.5px;
-    letter-spacing:0.8px;
-    max-width:38px;
+    font-size:6.2px;
+    letter-spacing:0.9px;
+    max-width:100%;
   }
   #intro-welcome-text{
     margin-top:170px;
@@ -3189,8 +3202,8 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 <div id="overview-hint">drag to rotate &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click a planet to open</div>
 <div id="solar-hint">tap a planet to open</div>
 <div id="solar-nav">
-  <button id="solar-prev-btn" class="solar-nav-btn" aria-label="Previous planet">&#8592;</button>
-  <button id="solar-next-btn" class="solar-nav-btn" aria-label="Next planet">&#8594;</button>
+  <button id="solar-prev-btn" class="solar-nav-btn hidden" aria-label="Previous planet">&#8592;</button>
+  <button id="solar-next-btn" class="solar-nav-btn hidden" aria-label="Next planet">&#8594;</button>
 </div>
 <div id="planet-labels"></div>
 <button id="reset-view-btn">&#9788;&nbsp;&nbsp;solar view</button>
@@ -3799,8 +3812,7 @@ function enterOverview() {
   focusGlowMesh.visible = false;
   document.getElementById('nav-dots').classList.remove('visible');
   document.getElementById('solar-hint').style.opacity = '0';
-  document.getElementById('solar-prev-btn').classList.add('hidden');
-  document.getElementById('solar-next-btn').classList.add('hidden');
+  setSolarNavVisible(false);
   document.getElementById('reset-view-btn').innerHTML = '&#8592;&nbsp;&nbsp;back';
   document.getElementById('overview-hint').style.opacity = '1';
   // Animate to overview
@@ -3834,8 +3846,7 @@ function exitOverview() {
   MODE = 'solar';
   document.getElementById('nav-dots').classList.add('visible');
   document.getElementById('solar-hint').style.opacity = '1';
-  document.getElementById('solar-prev-btn').classList.remove('hidden');
-  document.getElementById('solar-next-btn').classList.remove('hidden');
+  setSolarNavVisible(true);
   document.getElementById('reset-view-btn').innerHTML = '&#9788;&nbsp;&nbsp;solar view';
   document.getElementById('overview-hint').style.opacity = '0';
   // Animate back to 3rd person on selected planet
@@ -3902,6 +3913,11 @@ function handleSolarPlanetPress(idx) {
 
 function closeGuideOverlay() {
   document.getElementById('guide-overlay').classList.remove('open');
+}
+
+function setSolarNavVisible(visible) {
+  document.getElementById('solar-prev-btn').classList.toggle('hidden', !visible);
+  document.getElementById('solar-next-btn').classList.toggle('hidden', !visible);
 }
 
 let planetLabelEls = [];
@@ -5212,6 +5228,10 @@ let guideSuppressTimer = null;
 function suppressCurrentGuideOutsideInteraction(event) {
   const guide = document.getElementById('guide-overlay');
   if (!guide.classList.contains('open') || guide.contains(event.target)) return false;
+  if (event.target.closest('#reset-view-btn, #music-btn, #solar-prev-btn, #solar-next-btn, #nav-dots')) {
+    closeGuideOverlay();
+    return false;
+  }
   closeGuideOverlay();
   tooltip.classList.remove('show');
   isDragging = false;
@@ -5554,6 +5574,7 @@ function startIntro() {
   bubble.style.animation = 'none';
   bubble.style.opacity = '0';
   solarHint.style.opacity = '0';
+  setSolarNavVisible(false);
   navDots.classList.remove('visible');
 
   const introPreset = isMobileViewport
@@ -5636,6 +5657,7 @@ function startIntro() {
         MODE = 'solar';
         orbitState.target.copy(planetPos);
         solarHint.style.opacity = '1';
+        setSolarNavVisible(true);
         navDots.classList.add('visible');
         updateDots(0);
         welcome.remove();
@@ -5681,6 +5703,7 @@ if (sessionStorage.getItem('skipIntro')) {
 
   bubble.style.animation = 'bubble-in 0.5s ease forwards 0.3s';
   solarHint.style.opacity = '1';
+  setSolarNavVisible(true);
   navDots.classList.add('visible');
   updateDots(0);
   if (welcome) welcome.remove();
