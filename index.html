@@ -57,6 +57,11 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   border-color:rgba(0,200,255,0.36);
   background:rgba(0,22,38,0.5);
 }
+.solar-nav-btn:active{
+  transform:scale(0.96);
+  border-color:rgba(0,220,255,0.58);
+  background:rgba(0,40,62,0.72);
+}
 .solar-nav-btn.hidden{opacity:0;pointer-events:none}
 
 /* â”€â”€ Back button â”€â”€ */
@@ -127,16 +132,25 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 #nav-dots{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   display:flex;gap:5px;z-index:20;opacity:0;transition:opacity 0.5s;align-items:center;
+  pointer-events:none;
 }
 #nav-dots.visible{opacity:1}
 .dot{
-  width:16px;height:2px;border-radius:2px;
-  background:rgba(255,255,255,0.18);
+  width:16px;height:14px;border-radius:999px;
+  background:transparent;
   cursor:pointer;pointer-events:all;
   transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;
 }
-.dot.active{width:26px;background:var(--gold);box-shadow:0 0 8px var(--gold-glow);}
-.dot:hover:not(.active){background:rgba(255,255,255,0.42);}
+.dot::before{
+  content:'';position:absolute;left:0;right:0;top:50%;
+  height:2px;border-radius:2px;transform:translateY(-50%);
+  background:rgba(255,255,255,0.18);
+  transition:all 0.25s;
+}
+.dot.active{width:26px}
+.dot.active::before{height:3px;background:var(--gold);box-shadow:0 0 8px var(--gold-glow);}
+.dot:hover:not(.active)::before{background:rgba(255,255,255,0.42);}
 
 
 /* â”€â”€ Tooltip â”€â”€ */
@@ -1951,15 +1965,18 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
     padding:0 6px;
   }
   #solar-nav{
-    left:10px;
-    right:10px;
+    left:12px;
+    right:12px;
   }
   .solar-nav-btn{
-    width:44px;
-    height:44px;
-    font-size:18px;
-    min-width:44px;
-    min-height:44px;
+    width:56px;
+    height:56px;
+    font-size:24px;
+    min-width:56px;
+    min-height:56px;
+    border-color:rgba(0,200,255,0.28);
+    background:rgba(4,16,28,0.58);
+    box-shadow:0 0 0 1px rgba(255,255,255,0.04), 0 0 22px rgba(0,160,220,0.15);
   }
   #back-btn,
   #music-btn,
@@ -1994,15 +2011,43 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   #nav-dots{
     bottom:calc(16px + env(safe-area-inset-bottom, 0px));
     gap:6px;
+    padding:8px 10px;
+    border:1px solid rgba(0,200,255,0.16);
+    background:rgba(0,8,18,0.42);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   }
   .dot{
-    width:20px;
-    height:4px;
-    min-height:4px;
+    width:54px;
+    height:30px;
+    min-height:30px;
+    border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.025);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .dot::before{left:9px;right:9px;top:auto;bottom:5px;height:2px}
+  .dot::after{
+    content:attr(data-label);
+    font-family:'Space Grotesk',sans-serif;
+    font-size:6px;
+    font-weight:600;
+    letter-spacing:1.2px;
+    color:rgba(219,214,204,0.48);
+    text-transform:uppercase;
+    line-height:1;
+    max-width:46px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
   .dot.active{
-    width:32px;
+    width:64px;
+    border-color:rgba(196,165,88,0.42);
+    background:rgba(196,165,88,0.08);
   }
+  .dot.active::before{height:5px}
+  .dot.active::after{color:rgba(255,224,150,0.9)}
   #reset-view-btn{
     right:12px;
     bottom:calc(16px + env(safe-area-inset-bottom, 0px));
@@ -2520,13 +2565,13 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
     letter-spacing:1.2px;
   }
   #solar-nav{
-    left:8px;
-    right:8px;
+    left:10px;
+    right:10px;
   }
   .solar-nav-btn{
-    width:40px;
-    height:40px;
-    font-size:16px;
+    width:52px;
+    height:52px;
+    font-size:22px;
   }
   #back-btn,
   #music-btn,
@@ -2554,6 +2599,19 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   }
   #nav-dots{
     bottom:calc(12px + env(safe-area-inset-bottom, 0px));
+    gap:4px;
+    padding:7px 8px;
+  }
+  .dot{
+    width:46px;
+  }
+  .dot.active{
+    width:56px;
+  }
+  .dot::after{
+    font-size:5.5px;
+    letter-spacing:0.8px;
+    max-width:38px;
   }
   #intro-welcome-text{
     margin-top:170px;
@@ -2929,6 +2987,56 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   text-transform:lowercase;
 }
 
+@media(max-width:760px){
+  #astro-widget{
+    left:12px;
+    bottom:calc(88px + env(safe-area-inset-bottom, 0px));
+    z-index:22;
+  }
+  #astro-widget.intro-return{
+    left:12px;
+    bottom:calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+  #astro-widget.intro-center #astro-img{
+    width:120px;
+  }
+  #astro-widget.intro-return #astro-img,
+  #astro-img,
+  #astro-widget:hover #astro-img{
+    width:72px;
+  }
+  #astro-bubble{
+    bottom:78px;
+    left:0;
+    max-width:148px;
+    padding:8px 10px;
+  }
+  #astro-bubble p{
+    font-size:7px;
+    letter-spacing:1px;
+    line-height:1.55;
+  }
+}
+
+@media(max-width:640px){
+  #astro-widget,
+  #astro-widget.intro-return{
+    bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+  #astro-widget.intro-center #astro-img{
+    width:104px;
+  }
+  #astro-widget.intro-return #astro-img,
+  #astro-img,
+  #astro-widget:hover #astro-img{
+    width:62px;
+  }
+  #astro-bubble{
+    bottom:68px;
+    max-width:132px;
+  }
+}
+
 /* â”€â”€ Guide side panel â”€â”€ */
 #guide-overlay{
   position:fixed;left:0;top:0;bottom:0;width:340px;z-index:60;
@@ -3026,7 +3134,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   <source src="Timber.mp3" type="audio/mpeg">
 </audio>
 <div id="overview-hint">drag to rotate &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click a planet to open</div>
-<div id="solar-hint">scroll to choose a planet &nbsp;·&nbsp; drag to rotate &nbsp;·&nbsp; click a planet to open</div>
+<div id="solar-hint">arrows or planet tabs to switch &nbsp;·&nbsp; tap a planet to open</div>
 <div id="solar-nav">
   <button id="solar-prev-btn" class="solar-nav-btn" aria-label="Previous planet">&#8592;</button>
   <button id="solar-next-btn" class="solar-nav-btn" aria-label="Next planet">&#8594;</button>
@@ -3296,11 +3404,11 @@ const VIEW_PRESETS = {
 const HINT_COPY = {
   desktop: {
     overview: 'drag to rotate · scroll to zoom · click a planet to open',
-    solar: 'scroll to choose a planet · drag to rotate · click a planet to open'
+    solar: 'scroll to choose a planet · arrows or planet tabs to switch · click a planet to open'
   },
   mobile: {
     overview: 'drag to rotate · tap a planet to open',
-    solar: 'swipe to choose a planet · drag to rotate · tap a planet to open'
+    solar: 'arrows or planet tabs to switch · tap a planet to open'
   }
 };
 const SOLAR_3RD_PERSON = { behind: 5.0, up: 9.0, side: 13.0 };
@@ -4314,10 +4422,21 @@ function buildNav() {
   PLANETS.forEach((p, i) => {
     const dot = document.createElement('div');
     dot.className = 'dot';
+    dot.setAttribute('role', 'button');
+    dot.setAttribute('tabindex', '0');
+    dot.setAttribute('aria-label', `Switch to ${p.name}`);
+    dot.dataset.label = p.tab.replace('.md', '');
     dot.title = p.name;
-    dot.addEventListener('click', () => {
+    const activateDot = () => {
       if (MODE === 'focused') switchFocused(i);
       else if (MODE === 'solar') { selectSolarPlanet(i); updateDots(i); }
+    };
+    dot.addEventListener('click', activateDot);
+    dot.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activateDot();
+      }
     });
     dotsEl.appendChild(dot);
   });
@@ -5303,13 +5422,10 @@ canvas.addEventListener('touchend', e => {
   const absDx = Math.abs(dx);
   if (MODE==='focused') {
     focusedAutoTimer = setTimeout(() => { focusedAutoRot=true; }, 3500);
-    if (!switching && absDx>50) { if(dx<0) switchFocused((focusedIdx+1)%PLANETS.length); else switchFocused((focusedIdx-1+PLANETS.length)%PLANETS.length); }
-    else if (!switching && dragDist<12 && absDx<14) openPage(focusedIdx);
+    if (!switching && dragDist<12 && absDx<14) openPage(focusedIdx);
   }
   if (MODE==='solar') {
-    if (absDx > 50) {
-      stepPlanetSelection(dx < 0 ? 1 : -1);
-    } else if (dragDist<12 && absDx<14) {
+    if (dragDist<12 && absDx<14) {
       const touch = e.changedTouches[0];
       const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
       if (idx >= 0) handleSolarPlanetPress(idx);
