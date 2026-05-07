@@ -3135,6 +3135,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 @media(max-width:760px){
   #reset-view-btn,
   #music-btn{
+    z-index:70;
     top:calc(12px + env(safe-area-inset-top, 0px));
     bottom:auto;
     width:auto;
@@ -5410,7 +5411,10 @@ canvas.addEventListener('wheel', e => {
 }, {passive:false});
 
 document.getElementById('back-btn').addEventListener('click', zoomBackToSolar);
-document.getElementById('reset-view-btn').addEventListener('click', () => {
+document.getElementById('reset-view-btn').addEventListener('click', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  closeGuideOverlay();
   if (MODE === 'solar') enterOverview();
   else if (MODE === 'overview') exitOverview();
 });
