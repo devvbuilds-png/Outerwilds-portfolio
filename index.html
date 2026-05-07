@@ -2049,12 +2049,14 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   .dot.active::before{height:5px}
   .dot.active::after{color:rgba(255,224,150,0.9)}
   #reset-view-btn{
-    right:12px;
-    bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+    top:calc(12px + env(safe-area-inset-top, 0px));
+    left:12px;
+    right:auto;
+    bottom:auto;
     font-size:7.5px;
     letter-spacing:2.2px;
     padding:10px 14px;
-    max-width:58vw;
+    max-width:46vw;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -2593,7 +2595,11 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
     font-size:6.5px;
   }
   #reset-view-btn{
-    max-width:64vw;
+    top:calc(12px + env(safe-area-inset-top, 0px));
+    left:10px;
+    right:auto;
+    bottom:auto;
+    max-width:44vw;
     font-size:7px;
     letter-spacing:1.5px;
   }
@@ -3134,7 +3140,7 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
   <source src="Timber.mp3" type="audio/mpeg">
 </audio>
 <div id="overview-hint">drag to rotate &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click a planet to open</div>
-<div id="solar-hint">arrows or planet tabs to switch &nbsp;·&nbsp; tap a planet to open</div>
+<div id="solar-hint">tap a planet to open</div>
 <div id="solar-nav">
   <button id="solar-prev-btn" class="solar-nav-btn" aria-label="Previous planet">&#8592;</button>
   <button id="solar-next-btn" class="solar-nav-btn" aria-label="Next planet">&#8594;</button>
@@ -3408,7 +3414,7 @@ const HINT_COPY = {
   },
   mobile: {
     overview: 'drag to rotate · tap a planet to open',
-    solar: 'arrows or planet tabs to switch · tap a planet to open'
+    solar: 'tap a planet to open'
   }
 };
 const SOLAR_3RD_PERSON = { behind: 5.0, up: 9.0, side: 13.0 };
