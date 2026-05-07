@@ -154,6 +154,11 @@ a{color:inherit;text-decoration:none}
   transition:all 0.8s ease 0.2s;
 }
 .hero-buttons.visible{opacity:1;transform:translateY(0)}
+body.intro-running .hero-buttons,
+body.intro-running #nav,
+body.intro-running .mobile-menu{
+  pointer-events:none !important;
+}
 
 .btn{
   font-family:'Space Mono',monospace;
@@ -640,7 +645,7 @@ a{color:inherit;text-decoration:none}
 }
 </style>
 </head>
-<body>
+<body class="intro-running">
 
 <!-- Starfield -->
 <canvas id="starfield"></canvas>
@@ -913,6 +918,7 @@ async function runIntro() {
   // Show nav
   document.getElementById('nav').classList.add('visible');
   document.getElementById('skip-intro').classList.remove('visible');
+  document.body.classList.remove('intro-running');
   introComplete = true;
 }
 
@@ -935,6 +941,7 @@ function skipIntro() {
   document.getElementById('scroll-indicator').classList.add('visible');
   document.getElementById('nav').classList.add('visible');
   document.getElementById('skip-intro').classList.remove('visible');
+  document.body.classList.remove('intro-running');
   introComplete = true;
 }
 
