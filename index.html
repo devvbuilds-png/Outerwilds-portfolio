@@ -3025,8 +3025,8 @@ html,body{width:100%;height:100%;background:#00000a;overflow:hidden;cursor:defau
 <audio id="bg-music" preload="auto" loop>
   <source src="Timber.mp3" type="audio/mpeg">
 </audio>
-<div id="overview-hint">drag to rotate &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click a planet to select</div>
-<div id="solar-hint">scroll to choose a planet &nbsp;·&nbsp; drag to rotate &nbsp;·&nbsp; click once to select</div>
+<div id="overview-hint">drag to rotate &nbsp;·&nbsp; scroll to zoom &nbsp;·&nbsp; click a planet to open</div>
+<div id="solar-hint">scroll to choose a planet &nbsp;·&nbsp; drag to rotate &nbsp;·&nbsp; click a planet to open</div>
 <div id="solar-nav">
   <button id="solar-prev-btn" class="solar-nav-btn" aria-label="Previous planet">&#8592;</button>
   <button id="solar-next-btn" class="solar-nav-btn" aria-label="Next planet">&#8594;</button>
@@ -3295,12 +3295,12 @@ const VIEW_PRESETS = {
 };
 const HINT_COPY = {
   desktop: {
-    overview: 'drag to rotate · scroll to zoom · click a planet to select',
-    solar: 'scroll to choose a planet · drag to rotate · click once to select'
+    overview: 'drag to rotate · scroll to zoom · click a planet to open',
+    solar: 'scroll to choose a planet · drag to rotate · click a planet to open'
   },
   mobile: {
-    overview: 'drag to rotate · tap a planet to select',
-    solar: 'swipe to choose a planet · drag to rotate · tap once to focus'
+    overview: 'drag to rotate · tap a planet to open',
+    solar: 'swipe to choose a planet · drag to rotate · tap a planet to open'
   }
 };
 const SOLAR_3RD_PERSON = { behind: 5.0, up: 9.0, side: 13.0 };
@@ -3734,8 +3734,9 @@ function selectSolarPlanet(idx, options = {}) {
 function handleSolarPlanetPress(idx) {
   if (idx < 0) return;
   closeGuideOverlay();
-  if (idx === solarSelectedIdx) zoomToPlanet(idx);
-  else selectSolarPlanet(idx);
+  solarSelectedIdx = idx;
+  updateDots(idx);
+  openPage(idx);
 }
 
 function closeGuideOverlay() {
@@ -5033,6 +5034,35 @@ function isHoveringSun(event) {
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 const tooltip = document.getElementById('tooltip');
 const canvas = document.getElementById('c');
+let suppressGuideOutsideClick = false;
+let guideSuppressTimer = null;
+
+function suppressCurrentGuideOutsideInteraction(event) {
+  const guide = document.getElementById('guide-overlay');
+  if (!guide.classList.contains('open') || guide.contains(event.target)) return false;
+  closeGuideOverlay();
+  tooltip.classList.remove('show');
+  isDragging = false;
+  suppressGuideOutsideClick = true;
+  if (guideSuppressTimer) clearTimeout(guideSuppressTimer);
+  guideSuppressTimer = setTimeout(() => { suppressGuideOutsideClick = false; }, 450);
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+  return true;
+}
+
+function consumeSuppressedGuideClick(event) {
+  if (!suppressGuideOutsideClick) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.stopImmediatePropagation) event.stopImmediatePropagation();
+  suppressGuideOutsideClick = false;
+}
+
+document.addEventListener('mousedown', suppressCurrentGuideOutsideInteraction, true);
+document.addEventListener('touchstart', suppressCurrentGuideOutsideInteraction, {capture:true, passive:false});
+document.addEventListener('click', consumeSuppressedGuideClick, true);
 
 canvas.addEventListener('mousemove', e => {
   if (MODE === 'solar') {
@@ -5098,6 +5128,11 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mouseup', e => {
+  if (suppressGuideOutsideClick) {
+    isDragging = false;
+    canvas.style.cursor = '';
+    return;
+  }
   isDragging = false; canvas.style.cursor = '';
   if (MODE === 'focused') {
     focusedAutoTimer = setTimeout(() => { focusedAutoRot = true; }, 3500);
@@ -5119,10 +5154,7 @@ canvas.addEventListener('mouseup', e => {
     if (dragDist < 8) {
       const idx = getHoveredPlanet(e);
       if (idx >= 0) {
-        closeGuideOverlay();
-        solarSelectedIdx = idx;
-        updateDots(idx);
-        exitOverview();
+        handleSolarPlanetPress(idx);
       }
     } else {
       canvas.style.cursor = 'grab';
@@ -5262,6 +5294,10 @@ canvas.addEventListener('touchmove', e => {
 }, {passive:true});
 canvas.addEventListener('touchend', e => {
   e.preventDefault(); // suppress synthetic mousedown/mouseup ghost events
+  if (suppressGuideOutsideClick) {
+    isDragging = false;
+    return;
+  }
   isDragging=false;
   const dx = e.changedTouches[0].clientX - tStartX;
   const absDx = Math.abs(dx);
@@ -5285,10 +5321,7 @@ canvas.addEventListener('touchend', e => {
       const touch = e.changedTouches[0];
       const idx = getHoveredPlanet({ clientX: touch.clientX, clientY: touch.clientY });
       if (idx >= 0) {
-        closeGuideOverlay();
-        solarSelectedIdx = idx;
-        updateDots(idx);
-        exitOverview();
+        handleSolarPlanetPress(idx);
       }
     }
   }
@@ -5329,7 +5362,7 @@ window.addEventListener('keydown', e => {
     }
   } else if (MODE === 'solar' && (e.key === 'Enter' || e.key === ' ')) {
     e.preventDefault();
-    zoomToPlanet(solarSelectedIdx);
+    handleSolarPlanetPress(solarSelectedIdx);
   }
   if (e.key === 'Escape') {
     e.preventDefault();
@@ -5482,7 +5515,7 @@ if (sessionStorage.getItem('skipIntro')) {
   navDots.classList.add('visible');
   updateDots(0);
   if (welcome) welcome.remove();
-  if (returnToFocused) zoomToPlanet(0);
+  if (returnToFocused) selectSolarPlanet(0, { immediate: true });
 } else {
   startIntro();
 }
